@@ -1,0 +1,10 @@
+int~contador<|int~x, int~x|> 
+|:
+	int~x<-10!
+:| 
+
+empty~__main__ <||> |:
+	int~miArray<<2>><<2>>!
+	entero<-10!
+:| 
+

@@ -3,14 +3,15 @@ import java_cup.runtime.*;
 parser code {:
 
     public SymbolsTable tabla = new SymbolsTable();
+
     private int errores_sintacticos = 0;
     public void syntax_error(Symbol s) {
         errores_sintacticos++;
-        System.out.println("Error sintáctico en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". Valor no esperado: '" + s.value + "'");
+        System.out.println("Error sintáctico: en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". Valor no esperado: '" + s.value + "'");
     }
     public void unrecovered_syntax_error(Symbol s) {
         errores_sintacticos++;
-        System.out.println("Error sintáctico irrecuperable en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". valor: '" + s.value + "'");
+        System.out.println("Error sintáctico irrecuperable: en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". valor: '" + s.value + "'");
     }
     public int get_errores_sintacticos() {
         return errores_sintacticos;
@@ -27,7 +28,11 @@ parser code {:
     public void agregar_simbolo(Symbols s) {
         boolean simbolo_agregado = tabla.agregar_simbolo(s);
         if (!simbolo_agregado) {
-            semantic_error("Error semántico en línea " + s.getFila() + ", columna " + s.getColumna() + ": símbolo duplicado '" + s.getNombre() + "'");
+            if (s.getCategoria().equals("parametro")) {
+                semantic_error("Error semántico: en línea " + s.getFila() + ", columna " + s.getColumna() + ": parametro '" + s.getNombre() + "'" + " es un duplicado");
+            } else {
+                semantic_error("Error semántico: en línea " + s.getFila() + ", columna " + s.getColumna() + ": variable '" + s.getNombre() + "'" + " no puede ser declaro en este scope porque ese nombre se usa para definir una variable o un parámetro");
+            }
         }
     }
 :}
@@ -141,11 +146,25 @@ crear_variable ::= tipo_dato:t SEPARATOR ID:id opt_asignacion_variable END_EXPR 
 
 opt_asignacion_variable ::= | ASSIGN expresion;
 
-asignar_variable ::= ID ASSIGN expresion END_EXPR;
+asignar_variable ::= ID:id ASSIGN expresion END_EXPR
+{:
+    Symbols s = parser.tabla.buscar_simbolo_en_scope_actual(id);
+    if (s == null) {
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "'" + " no esta declarada");
+    }
+:};
 
 /*  arreglos  */
-
-crear_arreglo ::= tipo_dato:t SEPARATOR ID:id INDEX_START literal_numerico INDEX_END INDEX_START literal_numerico INDEX_END opt_asignacion_arreglo END_EXPR {: parser.agregar_simbolo(new Symbols(id, "arreglo", t, idleft + 1, idright + 1)); :};
+crear_arreglo ::= tipo_dato:t SEPARATOR ID:id INDEX_START literal_numerico INDEX_END INDEX_START literal_numerico INDEX_END opt_asignacion_arreglo END_EXPR
+{: 
+    if (!t.equals("int") && !t.equals("float")) {
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": no es posible crear un arreglo de tipo '" + t + "'. Los arreglos solo pueden ser de tipo int o float");
+    } else {
+        parser.agregar_simbolo(
+            new Symbols(id, "arreglo", t, idleft + 1, idright + 1)
+        );
+    }
+:};
 
 opt_asignacion_arreglo ::= | ASSIGN elementos_arreglo;
 

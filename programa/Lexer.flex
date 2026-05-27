@@ -129,5 +129,5 @@ ID = {LETTERS}({LETTERS}|{DIGIT})*
   {CHAR} {return symbol(sym.CHAR_LITERAL);}
   {ID} {return symbol(sym.ID);}
 
-  [^]  { errores++; if (!notificacion) System.err.println("Error léxico en línea " + (yyline+1) + ", columna " + (yycolumn+1) + ": caracter desconocido '" + yytext() + "'"); }
+  [^]  { errores++; if (!notificacion) System.err.println("Error léxico: en línea " + (yyline+1) + ", columna " + (yycolumn+1) + ": caracter desconocido '" + yytext() + "'"); }
 }

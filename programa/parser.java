@@ -794,14 +794,15 @@ public class parser extends java_cup.runtime.lr_parser {
 
 
     public SymbolsTable tabla = new SymbolsTable();
+
     private int errores_sintacticos = 0;
     public void syntax_error(Symbol s) {
         errores_sintacticos++;
-        System.out.println("Error sintáctico en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". Valor no esperado: '" + s.value + "'");
+        System.out.println("Error sintáctico: en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". Valor no esperado: '" + s.value + "'");
     }
     public void unrecovered_syntax_error(Symbol s) {
         errores_sintacticos++;
-        System.out.println("Error sintáctico irrecuperable en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". valor: '" + s.value + "'");
+        System.out.println("Error sintáctico irrecuperable: en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". valor: '" + s.value + "'");
     }
     public int get_errores_sintacticos() {
         return errores_sintacticos;
@@ -818,7 +819,11 @@ public class parser extends java_cup.runtime.lr_parser {
     public void agregar_simbolo(Symbols s) {
         boolean simbolo_agregado = tabla.agregar_simbolo(s);
         if (!simbolo_agregado) {
-            semantic_error("Error semántico en línea " + s.getFila() + ", columna " + s.getColumna() + ": símbolo duplicado '" + s.getNombre() + "'");
+            if (s.getCategoria().equals("parametro")) {
+                semantic_error("Error semántico: en línea " + s.getFila() + ", columna " + s.getColumna() + ": parametro '" + s.getNombre() + "'" + " es un duplicado");
+            } else {
+                semantic_error("Error semántico: en línea " + s.getFila() + ", columna " + s.getColumna() + ": variable '" + s.getNombre() + "'" + " no puede ser declaro en este scope porque ese nombre se usa para definir una variable o un parámetro");
+            }
         }
     }
 
@@ -1235,6 +1240,14 @@ class CUP$parser$actions {
           case 39: // asignar_variable ::= ID ASSIGN expresion END_EXPR 
             {
               Object RESULT =null;
+		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left;
+		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
+		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
+		
+    Symbols s = parser.tabla.buscar_simbolo_en_scope_actual(id);
+    if (s == null) {
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "'" + " no esta declarada");
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("asignar_variable",10, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1250,7 +1263,15 @@ class CUP$parser$actions {
 		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-8)).left;
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-8)).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-8)).value;
-		 parser.agregar_simbolo(new Symbols(id, "arreglo", t, idleft + 1, idright + 1)); 
+		 
+    if (!t.equals("int") && !t.equals("float")) {
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": no es posible crear un arreglo de tipo '" + t + "'. Los arreglos solo pueden ser de tipo int o float");
+    } else {
+        parser.agregar_simbolo(
+            new Symbols(id, "arreglo", t, idleft + 1, idright + 1)
+        );
+    }
+
               CUP$parser$result = parser.getSymbolFactory().newSymbol("crear_arreglo",11, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-10)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
