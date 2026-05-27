@@ -1,0 +1,225 @@
+import java_cup.runtime.*;
+
+parser code {:
+
+    public SymbolsTable tabla = new SymbolsTable();
+    private int errores_sintacticos = 0;
+    public void syntax_error(Symbol s) {
+        errores_sintacticos++;
+        System.out.println("Error sintáctico en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". Valor no esperado: '" + s.value + "'");
+    }
+    public void unrecovered_syntax_error(Symbol s) {
+        errores_sintacticos++;
+        System.out.println("Error sintáctico irrecuperable en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ". valor: '" + s.value + "'");
+    }
+    public int get_errores_sintacticos() {
+        return errores_sintacticos;
+    }
+
+    private int errores_semanticos = 0;
+    public void semantic_error(String mensaje) {
+        errores_semanticos++;
+        System.out.println(mensaje);
+    }
+    public int get_errores_semanticos() {
+        return errores_semanticos;
+    }
+    public void agregar_simbolo(Symbols s) {
+        boolean simbolo_agregado = tabla.agregar_simbolo(s);
+        if (!simbolo_agregado) {
+            semantic_error("Error semántico en línea " + s.getFila() + ", columna " + s.getColumna() + ": símbolo duplicado '" + s.getNombre() + "'");
+        }
+    }
+:}
+
+/* ── Terminales ── */
+terminal INT, FLOAT, CHAR, STRING, BOOL, EMPTY;
+terminal TRUE, FALSE;
+terminal IF, ELSE, DO, WHILE;
+terminal SWITCH, CASE, DEFAULT, BREAK, RETURN;
+terminal CIN, COUT, MAIN;
+
+terminal LESS_T, LESS_TE, GREATHER_T, GREATHER_TE, EQUAL, N_EQUAL;
+terminal INCREMENT, DECREMENT;
+terminal PLUS, MINUS, MULT, DIV, MOD, POW;
+terminal AND, OR, NOT;
+terminal ASSIGN;
+terminal BLOCK_START, BLOCK_END;
+terminal PAREN_OPEN, PAREN_CLOSE;
+terminal INDEX_START, INDEX_END;
+terminal SEPARATOR, COMMA, END_EXPR, COLON;
+
+terminal String ID;
+terminal String INT_LITERAL, FLOAT_LITERAL, FRAC_LITERAL, EXP_LITERAL, STRING_LITERAL, CHAR_LITERAL;
+
+/* ── No terminales ── */
+non terminal programa;
+non terminal main;
+non terminal lista_funciones;
+non terminal crear_funcion;
+non terminal opt_parametros;
+non terminal lista_parametros;
+non terminal parametro;
+non terminal lista_sentencias;
+non terminal sentencia;
+non terminal crear_variable;
+non terminal asignar_variable;
+non terminal crear_arreglo;
+non terminal modificar_arreglo;
+non terminal opt_asignacion_variable;
+non terminal opt_asignacion_arreglo;
+non terminal fila_arreglo;
+non terminal lista_filas;
+non terminal lista_num_arreglo;
+non terminal elementos_arreglo;
+non terminal sentencia_if;
+non terminal opt_else;
+non terminal sentencia_do_while;
+non terminal sentencia_switch;
+non terminal lista_casos;
+non terminal caso;
+non terminal opt_default;
+non terminal sentencia_return;
+non terminal sentencia_break;
+non terminal cin;
+non terminal cout;
+non terminal llamada_funcion;
+non terminal opt_args;
+non terminal lista_args;
+non terminal acceso_arreglo;
+non terminal String tipo_dato;
+non terminal expresion;
+non terminal expresion_disyuncion;
+non terminal expresion_conjuncion;
+non terminal expresion_igualdad;
+non terminal expresion_relacional;
+non terminal expresion_suma;
+non terminal expresion_multiplicacion;
+non terminal expresion_potencia;
+non terminal expresion_unaria;
+non terminal expresion_primaria;
+non terminal literal;
+non terminal String literal_numerico;
+non terminal literal_caso;
+non terminal opt_lista_sentencias;
+
+start with programa;
+
+/*  programa  */
+
+programa ::=  lista_funciones main;
+
+lista_funciones ::= | lista_funciones crear_funcion;
+
+main ::= EMPTY SEPARATOR MAIN PAREN_OPEN PAREN_CLOSE {: parser.tabla.abrir_scope_funcion("__main__"); :} BLOCK_START opt_lista_sentencias BLOCK_END {: parser.tabla.cerrar_scope(); :};
+
+
+/*  funciones  */
+
+crear_funcion ::= tipo_dato:t SEPARATOR ID:id {: parser.tabla.abrir_scope_funcion(id); :} PAREN_OPEN opt_parametros PAREN_CLOSE BLOCK_START opt_lista_sentencias BLOCK_END {: parser.tabla.cerrar_scope(); :};
+
+opt_parametros ::= | lista_parametros;
+
+lista_parametros ::= parametro | lista_parametros COMMA parametro;
+
+parametro ::= tipo_dato:t SEPARATOR ID:id {: parser.agregar_simbolo(new Symbols(id, "parametro", t, idleft + 1, idright + 1)); :};
+
+/*  tipos  */
+
+tipo_dato ::= INT {: RESULT = "int"; :} | FLOAT {: RESULT = "float"; :} | CHAR {: RESULT = "char"; :} | STRING {: RESULT = "string"; :} | BOOL {: RESULT = "bool"; :};
+
+/*  sentencias  */
+
+opt_lista_sentencias ::= | lista_sentencias | error BLOCK_END;
+
+lista_sentencias ::= sentencia | lista_sentencias sentencia;
+
+sentencia ::= crear_variable | asignar_variable | crear_arreglo | modificar_arreglo | sentencia_if | sentencia_do_while | sentencia_switch | sentencia_return | sentencia_break | cin | cout | expresion END_EXPR | error END_EXPR;
+
+/*  variables  */
+crear_variable ::= tipo_dato:t SEPARATOR ID:id opt_asignacion_variable END_EXPR {: parser.agregar_simbolo(new Symbols(id, "variable", t, idleft + 1, idright + 1)); :};
+
+opt_asignacion_variable ::= | ASSIGN expresion;
+
+asignar_variable ::= ID ASSIGN expresion END_EXPR;
+
+/*  arreglos  */
+
+crear_arreglo ::= tipo_dato:t SEPARATOR ID:id INDEX_START literal_numerico INDEX_END INDEX_START literal_numerico INDEX_END opt_asignacion_arreglo END_EXPR {: parser.agregar_simbolo(new Symbols(id, "arreglo", t, idleft + 1, idright + 1)); :};
+
+opt_asignacion_arreglo ::= | ASSIGN elementos_arreglo;
+
+elementos_arreglo ::= BLOCK_START lista_filas BLOCK_END;
+
+lista_filas ::= fila_arreglo | lista_filas COMMA fila_arreglo;
+
+fila_arreglo ::= BLOCK_START literal_numerico lista_num_arreglo BLOCK_END;
+
+lista_num_arreglo ::= | lista_num_arreglo COMMA literal_numerico;
+
+modificar_arreglo ::= acceso_arreglo ASSIGN expresion END_EXPR;
+
+acceso_arreglo ::= ID INDEX_START expresion INDEX_END INDEX_START expresion INDEX_END;
+
+/*  bloques de control */
+
+sentencia_if ::= IF PAREN_OPEN expresion PAREN_CLOSE {: parser.tabla.abrir_scope("if"); :} BLOCK_START opt_lista_sentencias BLOCK_END {: parser.tabla.cerrar_scope(); :} opt_else;
+
+opt_else ::= | ELSE {: parser.tabla.abrir_scope("else"); :} BLOCK_START opt_lista_sentencias BLOCK_END {: parser.tabla.cerrar_scope(); :};
+
+sentencia_do_while ::= DO {: parser.tabla.abrir_scope("do_while"); :} BLOCK_START opt_lista_sentencias BLOCK_END {: parser.tabla.cerrar_scope(); :} WHILE PAREN_OPEN expresion PAREN_CLOSE END_EXPR;
+
+sentencia_switch ::= SWITCH PAREN_OPEN expresion PAREN_CLOSE {: parser.tabla.abrir_scope("switch"); :} BLOCK_START lista_casos opt_default BLOCK_END {: parser.tabla.cerrar_scope(); :};
+
+lista_casos ::= caso | lista_casos caso;
+
+caso ::= CASE SEPARATOR literal_caso COLON opt_lista_sentencias;
+
+opt_default ::= | DEFAULT COLON opt_lista_sentencias;
+
+sentencia_return ::= RETURN SEPARATOR expresion END_EXPR;
+
+sentencia_break ::= BREAK END_EXPR;
+
+/*  CIN / COUT */
+
+cin ::= CIN PAREN_OPEN ID PAREN_CLOSE END_EXPR;
+
+cout ::= COUT PAREN_OPEN expresion PAREN_CLOSE END_EXPR;
+
+/*  llamada a funcion */
+
+llamada_funcion ::= ID PAREN_OPEN opt_args PAREN_CLOSE;
+
+opt_args ::= | lista_args;
+
+lista_args ::= expresion | lista_args COMMA expresion;
+
+/*  expresiones */
+
+expresion ::= expresion_disyuncion;
+
+expresion_disyuncion ::= expresion_conjuncion | expresion_disyuncion OR expresion_conjuncion;
+
+expresion_conjuncion ::= expresion_igualdad | expresion_conjuncion AND expresion_igualdad;
+
+expresion_igualdad ::= expresion_relacional | EQUAL PAREN_OPEN expresion COMMA expresion PAREN_CLOSE | N_EQUAL PAREN_OPEN expresion COMMA expresion PAREN_CLOSE;
+
+expresion_relacional ::= expresion_suma | LESS_T PAREN_OPEN expresion COMMA expresion PAREN_CLOSE | LESS_TE PAREN_OPEN expresion COMMA expresion PAREN_CLOSE | GREATHER_T PAREN_OPEN expresion COMMA expresion PAREN_CLOSE | GREATHER_TE PAREN_OPEN expresion COMMA expresion PAREN_CLOSE;
+
+expresion_suma ::= expresion_multiplicacion | expresion_suma PLUS expresion_multiplicacion | expresion_suma MINUS expresion_multiplicacion;
+
+expresion_multiplicacion ::= expresion_potencia | expresion_multiplicacion MULT expresion_potencia | expresion_multiplicacion DIV expresion_potencia | expresion_multiplicacion MOD expresion_potencia;
+
+expresion_potencia ::= expresion_unaria | expresion_unaria POW expresion_potencia;
+
+expresion_unaria ::= expresion_primaria | MINUS expresion_unaria | NOT expresion_unaria | INCREMENT ID | DECREMENT ID;
+
+expresion_primaria ::= literal | ID | llamada_funcion | acceso_arreglo | PAREN_OPEN expresion PAREN_CLOSE;
+
+/*  literales */
+literal ::= literal_numerico | STRING_LITERAL | CHAR_LITERAL | TRUE | FALSE;
+
+literal_numerico ::= INT_LITERAL | FLOAT_LITERAL | FRAC_LITERAL | EXP_LITERAL;
+
+literal_caso ::= literal_numerico | CHAR_LITERAL;
