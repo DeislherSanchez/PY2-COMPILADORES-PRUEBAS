@@ -35,6 +35,13 @@ parser code {:
             }
         }
     }
+
+    public String tipo_arreglo_actual = "";
+    public int cantidad_filas_esperadas = 0;
+    public int cantidad_columnas_esperadas = 0;
+    public int filas_encontradas = 0;
+    public int columnas_encontradas = 0;
+    public boolean arreglo_valido = true;
 :}
 
 /* ── Terminales ── */
@@ -103,9 +110,9 @@ non terminal expresion_multiplicacion;
 non terminal expresion_potencia;
 non terminal expresion_unaria;
 non terminal expresion_primaria;
-non terminal literal;
-non terminal String literal_numerico;
-non terminal literal_caso;
+non terminal String literal;
+non terminal Numero literal_numerico;
+non terminal String literal_caso;
 non terminal opt_lista_sentencias;
 
 start with programa;
@@ -155,14 +162,45 @@ asignar_variable ::= ID:id ASSIGN expresion END_EXPR
 :};
 
 /*  arreglos  */
-crear_arreglo ::= tipo_dato:t SEPARATOR ID:id INDEX_START literal_numerico INDEX_END INDEX_START literal_numerico INDEX_END opt_asignacion_arreglo END_EXPR
-{: 
+crear_arreglo ::= tipo_dato:t SEPARATOR ID:id INDEX_START literal_numerico:cf INDEX_END INDEX_START literal_numerico:cc INDEX_END
+{:
+    parser.tipo_arreglo_actual = t;
+    parser.filas_encontradas = 0;
+    parser.columnas_encontradas = 0;
+    parser.arreglo_valido = true;
+
+    /* validar el tipo del arreglo */
     if (!t.equals("int") && !t.equals("float")) {
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": no es posible crear un arreglo de tipo '" + t + "'. Los arreglos solo pueden ser de tipo int o float");
-    } else {
-        parser.agregar_simbolo(
-            new Symbols(id, "arreglo", t, idleft + 1, idright + 1)
-        );
+        parser.arreglo_valido = false;
+    }
+
+    /* validar el tipo de las dimensiones */
+    if (parser.arreglo_valido) {
+        if (!cf.getTipo().equals("int") || !cc.getTipo().equals("int")) {
+            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": las dimensiones de un arreglo solo pueden ser enteros");
+            parser.arreglo_valido = false;
+        }
+    }
+
+    /* guardar dimensiones */
+    if (parser.arreglo_valido) {
+        parser.cantidad_filas_esperadas = Integer.parseInt(cf.getValor());
+        parser.cantidad_columnas_esperadas = Integer.parseInt(cf.getValor());
+    }
+:}
+
+opt_asignacion_arreglo END_EXPR
+{: 
+    if (parser.arreglo_valido) {
+        /* validar filas*/
+        if (parser.filas_encontradas > 0 && parser.filas_encontradas != parser.cantidad_filas_esperadas) {
+            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": el arreglo tiene " + parser.filas_encontradas + " filas pero se declararon " + parser.cantidad_filas_esperadas);
+            parser.arreglo_valido = false;
+        }
+    }
+    if (parser.arreglo_valido) {
+        parser.agregar_simbolo(new Symbols(id, "arreglo", t, idleft + 1, idright + 1));
     }
 :};
 
@@ -170,15 +208,63 @@ opt_asignacion_arreglo ::= | ASSIGN elementos_arreglo;
 
 elementos_arreglo ::= BLOCK_START lista_filas BLOCK_END;
 
-lista_filas ::= fila_arreglo | lista_filas COMMA fila_arreglo;
+lista_filas ::= fila_arreglo {: parser.filas_encontradas = 1; :} | lista_filas COMMA fila_arreglo {: parser.filas_encontradas++; :};
 
-fila_arreglo ::= BLOCK_START literal_numerico lista_num_arreglo BLOCK_END;
+fila_arreglo ::= BLOCK_START literal_numerico:n lista_num_arreglo BLOCK_END
+{:
+    parser.columnas_encontradas++;
+    /* validar columnas */
+    if (parser.arreglo_valido) {
+        if (parser.columnas_encontradas != parser.cantidad_columnas_esperadas) {
+            int fila_actual = parser.filas_encontradas + 1;
+            parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": la fila " + fila_actual + " tiene " + parser.columnas_encontradas + " elementos pero se esperaban " + parser.cantidad_columnas_esperadas);
+            parser.arreglo_valido = false;
+        }
+    }
+    /* validar tipo de los elementos */
+    if (parser.arreglo_valido) {
+        if (parser.tipo_arreglo_actual.equals("int") && !n.getTipo().equals("int")) {
+            parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo int");
+            parser.arreglo_valido = false;
+        }
+        if (parser.tipo_arreglo_actual.equals("float") && !n.getTipo().equals("float")) {
+            parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo float");
+            parser.arreglo_valido = false;
+        }
+    }
+    parser.columnas_encontradas = 0;
+:};
 
-lista_num_arreglo ::= | lista_num_arreglo COMMA literal_numerico;
+lista_num_arreglo ::= | lista_num_arreglo COMMA literal_numerico:n
+{:
+    if (parser.arreglo_valido) {
+        parser.columnas_encontradas++;
+        /* validar tipo de los elementos */
+        if (parser.tipo_arreglo_actual.equals("int") && !n.getTipo().equals("int")) {
+            parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo int");
+            parser.arreglo_valido = false;
+        }
+        /* validar tipo de los elementos */
+        if (parser.tipo_arreglo_actual.equals("float") && !n.getTipo().equals("float")) {
+            parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo float");
+            parser.arreglo_valido = false;
+        }
+    }
+:};
 
 modificar_arreglo ::= acceso_arreglo ASSIGN expresion END_EXPR;
 
-acceso_arreglo ::= ID INDEX_START expresion INDEX_END INDEX_START expresion INDEX_END;
+acceso_arreglo ::= ID INDEX_START literal_numerico:nf INDEX_END INDEX_START literal_numerico:nc INDEX_END
+{:
+    /* validar fila */
+    if (!nf.getTipo().equals("int")) {
+        parser.semantic_error("Error semántico: en línea " + (nfleft + 1) + ", columna " + (nfright + 1) + ": el índice de fila debe ser de tipo int");
+    }
+    /* validar columna */
+    if (!nc.getTipo().equals("int")) {
+        parser.semantic_error("Error semántico: en línea " + (nfleft + 1) + ", columna " + (nfright + 1) + ": el índice de columna debe ser de tipo int");
+    }
+:};
 
 /*  bloques de control */
 
@@ -192,7 +278,12 @@ sentencia_switch ::= SWITCH PAREN_OPEN expresion PAREN_CLOSE {: parser.tabla.abr
 
 lista_casos ::= caso | lista_casos caso;
 
-caso ::= CASE SEPARATOR literal_caso COLON opt_lista_sentencias;
+caso ::= CASE SEPARATOR literal_caso:t COLON opt_lista_sentencias
+{:
+    if (!t.equals("int") && !t.equals("char")) {
+        parser.semantic_error("Error semántico: en línea " + (tleft + 1) + ", columna " + (tright + 1) + ": '" + t + "' no es un caso válido, solo se permiten int o char");
+    }
+:};
 
 opt_default ::= | DEFAULT COLON opt_lista_sentencias;
 
@@ -237,8 +328,8 @@ expresion_unaria ::= expresion_primaria | MINUS expresion_unaria | NOT expresion
 expresion_primaria ::= literal | ID | llamada_funcion | acceso_arreglo | PAREN_OPEN expresion PAREN_CLOSE;
 
 /*  literales */
-literal ::= literal_numerico | STRING_LITERAL | CHAR_LITERAL | TRUE | FALSE;
+literal ::= literal_numerico:l {: RESULT = l.getTipo(); :} | STRING_LITERAL {: RESULT = "string"; :} | CHAR_LITERAL {: RESULT = "char"; :} | TRUE {: RESULT = "bool"; :} | FALSE {: RESULT = "bool"; :}; 
 
-literal_numerico ::= INT_LITERAL | FLOAT_LITERAL | FRAC_LITERAL | EXP_LITERAL;
+literal_numerico ::= INT_LITERAL:i {: RESULT = new Numero("int", i); :} | FLOAT_LITERAL:f {: RESULT = new Numero("float", f); :} | FRAC_LITERAL:f {: RESULT = new Numero("float", f); :} | EXP_LITERAL:e {: RESULT = new Numero("float", e); :};
 
-literal_caso ::= literal_numerico | CHAR_LITERAL;
+literal_caso ::= literal_numerico:l {: RESULT = l.getTipo(); :} | CHAR_LITERAL {: RESULT = "char"; :};

@@ -10,7 +10,7 @@ float~_mi_  <| int~_dif_, char~_otra_|> ¡¡sintactico
 	 |: 
 		do
 		 |: 
-			_var_ <- _var_ - 1! ¡¡semantico
+			char~_var_ <- _var_ - 1! ¡¡semantico
 		 :| while <| 1 @ $ <| <|greather_te<|12 , <| 34+35 |>|>|>  |> |>! ¡¡semantico, ver manejo de parentesis y combinacion
 
 		if  <| _var_ |> 
@@ -49,7 +49,7 @@ float~_mi_  <| int~_dif_, char~_otra_|> ¡¡sintactico
   :| 
 
  empty~__main__ <|  |>   |: ¡¡ semantico tipo void
-	_arr_<<67+_i_>><<67+_i_>> <- -0.01 + 10e10 * "sd"!  ¡¡ semantico
+	_arr_<<67>><<67>> <- -0.01 + 10e10 * "sd"!  ¡¡ semantico
 	bool~_b1_! ¡¡semantico
 	string~_s1_! ¡¡semantico
 	cin <| _s1_ |> ! ¡¡semantico
