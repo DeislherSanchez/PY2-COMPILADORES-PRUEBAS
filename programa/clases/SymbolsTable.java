@@ -7,6 +7,7 @@ import java.util.ArrayList;
  */
 public class SymbolsTable {
     private ArrayList<Scope> funciones;
+    private ArrayList<Symbols> funciones_globales;
     private Scope scope_actual;
 
     /**
@@ -14,7 +15,12 @@ public class SymbolsTable {
      */
     public SymbolsTable() {
         this.funciones = new ArrayList<Scope>();
+        this.funciones_globales = new ArrayList<Symbols>();
         this.scope_actual = null;
+    }
+
+    public Scope getScopeActual() {
+        return scope_actual;
     }
 
     /**
@@ -66,6 +72,37 @@ public class SymbolsTable {
     }
 
     /**
+     * Agrega una nueva función global a la tabla.
+     * @param s La función a agregar
+     * @return true si la función fue agregada, false si ya existe
+     */
+    public boolean agregar_funcion(Symbols s) {
+        for (Symbols f : funciones_globales) {
+            if (f.getNombre().equals(s.getNombre())) {
+                return false;
+            }
+        }
+
+        funciones_globales.add(s);
+        return true;
+    }
+
+    /**
+     * Busca una función global por su nombre.
+     * @param nombre_funcion Nombre de la función a buscar
+     * @return La función encontrada o null si no existe
+     */
+    public Symbols buscar_funcion(String nombre_funcion) {
+        for (Symbols f : funciones_globales) {
+            if (f.getNombre().equals(nombre_funcion)) {
+                return f;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Verifica si un simbolo ya existe en el scope actual de la tabla.
      * @param nombre_simbolo Nombre del simbolo a buscar
      * @return true si el simbolo existe en el scope actual, false en caso contrario
@@ -95,6 +132,15 @@ public class SymbolsTable {
      */
     public void imprimir_tabla() {
         System.out.println("========== TABLA DE SIMBOLOS ==========");
+        System.out.println("Funciones globales:");
+        if (funciones_globales.isEmpty()) {
+            System.out.println("  (vacío)");
+        } else {
+            for (Symbols f : funciones_globales) {
+                System.out.println("  ├── " + f.toString());
+            }
+        }
+        System.out.println();
         for (Scope funcion : funciones) {
             imprimir_scope(funcion, 0);
             System.out.println();

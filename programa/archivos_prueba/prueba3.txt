@@ -1,14 +1,10 @@
-int~contador<|int~x, int~y|> 
-|:
-	int~xz<-10!
+char~contar_letras<||> |:
+	int~x!
 :| 
 
+
 empty~__main__ <||> |:
-	char~miArray1<<2>><<2>><- |:|:1,2:|, |:1,2,3:|:|! ¡¡ debe cortar desde el tipo 
-	int~miArray2<<2>><<3.2>><-|:|:1,2:|, |:1,2,3:|:|! ¡¡ debe cortar desde dimensiones
-	int~miArray3<<2>><<2>><-|:|:1,2:|, |:1,2,3.2:|:|! ¡¡ debe cortar desde columnas
-	int~miArray3<<2>><<2>><-|:|:1,2:|, |:1,2:|:|! ¡¡ falla con el tipo del elemento
-	int~miArray3<<2>><<2>><-|:|:1,2:|, |:1,2:|:|! ¡¡ falla con el tipo del elemento
-	miArray3<<2>><<2>>!
+	int~x<-10.2!
+
 :| 
 
