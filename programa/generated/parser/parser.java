@@ -813,7 +813,6 @@ public class parser extends java_cup.runtime.lr_parser {
             }
         }
     }
-
     public boolean agregar_funcion(Symbols s) {
         boolean funcion_agregada = tabla.agregar_funcion(s);
         if (!funcion_agregada) {
