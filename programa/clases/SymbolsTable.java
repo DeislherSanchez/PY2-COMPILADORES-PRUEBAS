@@ -122,7 +122,7 @@ public class SymbolsTable {
      * @param nombre_simbolo Nombre del simbolo a buscar
      * @return El simbolo encontrado o null si no existe
      */
-    public Symbols buscar_simbolo_en_scope_actual(String nombre_simbolo) {
+    public Symbols buscar_simbolo(String nombre_simbolo) {
         if (scope_actual != null) {
             return scope_actual.buscar_simbolo(nombre_simbolo);
         }

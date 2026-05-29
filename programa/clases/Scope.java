@@ -106,6 +106,20 @@ public class Scope {
     }
 
     /**
+     * Busca un símbolo por su nombre en el scope actual.
+     * @param nombre_simbolo El nombre del símbolo a buscar
+     * @return El símbolo encontrado o null si no se encuentra
+     */
+    public Symbols buscar_en_scope_actual(String nombre) {
+        for (Symbols s : simbolos) {
+            if (s.getNombre().equals(nombre)) {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Verifica si un simbolo ya existe en el scope actual.
      * @param nombre_simbolo Nombre del simbolo a buscar
      * @return true si el simbolo existe en el scope actual, false en caso contrario

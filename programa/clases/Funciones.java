@@ -8,6 +8,7 @@ public class Funciones {
     public int argumentos_actuales;
     public ArrayList<String> tipos_parametros_actuales;
     public ArrayList<String> tipos_argumentos_actuales;
+    public boolean declaracion_valida;
 
     /**
      * Inicializa el estado de validacion de funciones.
@@ -24,5 +25,6 @@ public class Funciones {
         argumentos_actuales = 0;
         tipos_parametros_actuales = new ArrayList<>();
         tipos_argumentos_actuales = new ArrayList<>();
+        declaracion_valida = true;
     }
 }

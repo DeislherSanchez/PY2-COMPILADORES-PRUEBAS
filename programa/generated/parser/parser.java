@@ -930,6 +930,7 @@ class CUP$parser$actions {
     Symbols funcion = new Symbols(id, "funcion", t, idleft + 1, idright + 1);
 
     boolean funcion_agregada = parser.agregar_funcion(funcion);
+    parser.funciones.declaracion_valida = funcion_agregada;
     if (funcion_agregada) {
         parser.tabla.abrir_scope_funcion(id);
     }
@@ -949,12 +950,13 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
 
-    Symbols funcion = parser.tabla.buscar_funcion(id);
-
-    if (funcion != null) {
-        funcion.setCantidadParametros(parser.funciones.parametros_actuales);
-        for (String tipo : parser.funciones.tipos_parametros_actuales) {
-            funcion.agregarTipoParametro(tipo);
+    if (parser.funciones.declaracion_valida) {
+        Symbols funcion = parser.tabla.buscar_funcion(id);
+        if (funcion != null) {
+            funcion.setCantidadParametros(parser.funciones.parametros_actuales);
+            for (String tipo : parser.funciones.tipos_parametros_actuales) {
+                funcion.agregarTipoParametro(tipo);
+            }
         }
     }
 
@@ -975,7 +977,7 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-8)).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-8)).value;
 		
-    if (parser.tabla.getScopeActual() != null) {
+    if (parser.funciones.declaracion_valida) {
         parser.tabla.cerrar_scope();
     }
 
@@ -990,6 +992,7 @@ class CUP$parser$actions {
 		
     parser.funciones.parametros_actuales = 0;
     parser.funciones.tipos_parametros_actuales.clear();
+    parser.funciones.declaracion_valida = true;
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("opt_parametros",4, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1033,8 +1036,10 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		 
-    parser.funciones.tipos_parametros_actuales.add(t);
-    parser.agregar_simbolo(new Symbols(id, "parametro", t, idleft + 1, idright + 1)); 
+    if (parser.funciones.declaracion_valida) {
+        parser.funciones.tipos_parametros_actuales.add(t);
+        parser.agregar_simbolo(new Symbols(id, "parametro", t, idleft + 1, idright + 1));
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("parametro",6, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1262,7 +1267,7 @@ class CUP$parser$actions {
 		String e = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		 
     if (e != null && !t.equals(e)) {
-        parser.semantic_error("Error semántico: no se puede asignar un valor de tipo '" + e + "' a una variable de tipo '" + t + "'");
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": no se puede asignar un valor de tipo '" + e + "' a una variable de tipo '" + t + "'");
     }
     parser.agregar_simbolo(new Symbols(id, "variable", t, idleft + 1, idright + 1)); 
 
@@ -1299,7 +1304,7 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
 		
-    Symbols s = parser.tabla.buscar_simbolo_en_scope_actual(id);
+    Symbols s = parser.tabla.buscar_simbolo(id);
     if (s == null) {
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "'" + " no esta declarada");
     }
@@ -1523,21 +1528,31 @@ class CUP$parser$actions {
 		int ncright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Numero nc = (Numero)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		
-    Symbols s = parser.tabla.buscar_simbolo_en_scope_actual(id);
+    Symbols s = parser.tabla.buscar_simbolo(id);
     if (s == null) {
-        parser.semantic_error("Error semántico: arreglo '" + id + "' no declarado");
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": arreglo '" + id + "' no declarado");
         RESULT = "error";
-    } else {
+    }
+    else {
         RESULT = s.getTipo();
-    }
-    /* validar fila */
-    if (!nf.getTipo().equals("int")) {
-        parser.semantic_error("Error semántico: en línea " + (nfleft + 1) + ", columna " + (nfright + 1) + ": el índice de fila debe ser de tipo int");
-    }
 
-    /* validar columna */
-    if (!nc.getTipo().equals("int")) {
-        parser.semantic_error("Error semántico: en línea " + (ncleft + 1) + ", columna " + (ncright + 1) + ": el índice de columna debe ser de tipo int");
+        /* validar fila */
+        if (!nf.getTipo().equals("int")) {
+            parser.semantic_error(
+                "Error semántico: en línea " + (nfleft + 1) +
+                ", columna " + (nfright + 1) +
+                ": el índice de fila debe ser de tipo int"
+            );
+        }
+
+        /* validar columna */
+        if (!nc.getTipo().equals("int")) {
+            parser.semantic_error(
+                "Error semántico: en línea " + (ncleft + 1) +
+                ", columna " + (ncright + 1) +
+                ": el índice de columna debe ser de tipo int"
+            );
+        }
     }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("acceso_arreglo",33, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-6)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1725,6 +1740,21 @@ class CUP$parser$actions {
           case 71: // cin ::= CIN PAREN_OPEN ID PAREN_CLOSE END_EXPR 
             {
               Object RESULT =null;
+		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		
+    Symbols s = parser.tabla.buscar_simbolo(id);
+
+    if (s == null) {
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
+    }
+    else {
+        String tipo = s.getTipo();
+        if (!tipo.equals("int") && !tipo.equals("float")) {
+            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": cin solo puede leer variables de tipo int o float");
+        }
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("cin",28, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1734,6 +1764,9 @@ class CUP$parser$actions {
           case 72: // cout ::= COUT PAREN_OPEN expresion PAREN_CLOSE END_EXPR 
             {
               Object RESULT =null;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		String e = (String)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("cout",29, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1766,22 +1799,22 @@ class CUP$parser$actions {
 		
     Symbols s = parser.tabla.buscar_funcion(id);
     if (s == null) {
-        parser.semantic_error("Error semántico: función '" + id + "' no declarada");
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": función '" + id + "' no declarada");
         RESULT = "error";
     }
     else if (!s.getCategoria().equals("funcion")) {
-        parser.semantic_error("Error semántico: '" + id + "' no es una función");
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": '" + id + "' no es una función");
         RESULT = "error";
     }
     else {
         if (s.getCantidadParametros() != parser.funciones.argumentos_actuales) {
-            parser.semantic_error("Error semántico: la función '" + id + "' esperaba " + s.getCantidadParametros() + " parámetros pero recibió " + parser.funciones.argumentos_actuales);
+            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": la función '" + id + "' esperaba " + s.getCantidadParametros() + " parámetros pero recibió " + parser.funciones.argumentos_actuales);
         } else {
             for (int i = 0; i < s.getTiposParametros().size(); i++) {
                 String tipo_esperado = s.getTiposParametros().get(i);
                 String tipo_recibido = parser.funciones.tipos_argumentos_actuales.get(i);
                 if (!tipo_esperado.equals(tipo_recibido)) {
-                    parser.semantic_error("Error semántico: en la llamada a '" + id + "' el parámetro " + (i + 1) + " esperaba un valor de tipo '" + tipo_esperado + "' pero recibió '" + tipo_recibido + "'");
+                    parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": en la llamada a '" + id + "' el parámetro " + (i + 1) + " esperaba un valor de tipo '" + tipo_esperado + "' pero recibió '" + tipo_recibido + "'");
                     break;
                 }
             }
@@ -2191,10 +2224,10 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-    Symbols s = parser.tabla.buscar_simbolo_en_scope_actual(id);
+    Symbols s = parser.tabla.buscar_simbolo(id);
 
     if (s == null) {
-        parser.semantic_error("Error semántico: variable '" + id + "' no declarada");
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
         RESULT = "error";
     } else {
         RESULT = s.getTipo();
@@ -2212,10 +2245,10 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-    Symbols s = parser.tabla.buscar_simbolo_en_scope_actual(id);
+    Symbols s = parser.tabla.buscar_simbolo(id);
 
     if (s == null) {
-        parser.semantic_error("Error semántico: variable '" + id + "' no declarada");
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
         RESULT = "error";
     } else {
         RESULT = s.getTipo();
@@ -2245,9 +2278,9 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-    Symbols s = parser.tabla.buscar_simbolo_en_scope_actual(id);
+    Symbols s = parser.tabla.buscar_simbolo(id);
     if (s == null) {
-        parser.semantic_error("Error semántico: variable '" + id + "' no declarada");
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
         RESULT = "error";
     } else {
         RESULT = s.getTipo();
