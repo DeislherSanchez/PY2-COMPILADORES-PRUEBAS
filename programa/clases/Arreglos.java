@@ -1,3 +1,6 @@
+/**
+ * Estado temporal para validar la declaracion y la asignacion de arreglos.
+ */
 public class Arreglos {
     public String tipo_arreglo_actual;
     public int cantidad_filas_esperadas;
@@ -6,10 +9,16 @@ public class Arreglos {
     public int columnas_encontradas;
     public boolean arreglo_valido;
 
+    /**
+     * Inicializa el estado de validacion de arreglos.
+     */
     public Arreglos() {
         reiniciar();
     }
 
+    /**
+     * Restablece el estado para iniciar una nueva declaracion de arreglo.
+     */
     public void reiniciar() {
         tipo_arreglo_actual = "";
         cantidad_filas_esperadas = 0;

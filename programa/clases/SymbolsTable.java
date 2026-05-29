@@ -1,9 +1,8 @@
 import java.util.ArrayList;
 
 /**
- * Clase SymbolsTable, representa la tabla de símbolos que contiene los scopes de las funciones y los bloques de código, así como los símbolos declarados en cada scope.
- * Permite abrir y cerrar scopes, agregar símbolos a los scopes actuales, e imprimir la tabla de símbolos.
- * Cada scope tiene un nombre, una lista de símbolos, una referencia al scope padre y una lista de scopes hijos. Cada símbolo tiene un nombre, categoría, tipo y posición (fila y columna) en el código fuente.
+ * Tabla de simbolos con scopes de funciones y bloques, y funciones globales.
+ * Permite abrir y cerrar scopes, agregar simbolos y consultar funciones.
  */
 public class SymbolsTable {
     private ArrayList<Scope> funciones;
@@ -19,6 +18,10 @@ public class SymbolsTable {
         this.scope_actual = null;
     }
 
+    /**
+     * Obtiene el scope actual.
+     * @return scope actual o null si no hay un scope abierto
+     */
     public Scope getScopeActual() {
         return scope_actual;
     }
