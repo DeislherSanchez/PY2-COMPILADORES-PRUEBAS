@@ -7,6 +7,8 @@ public class Symbols {
     private String tipo;
     private int fila;
     private int columna;
+    private int cantidad_parametros;
+
 
     /**
      * Constructor de la clase Symbols.
@@ -22,6 +24,7 @@ public class Symbols {
         this.tipo = tipo;
         this.fila = fila;
         this.columna = columna;
+        this.cantidad_parametros = 0;
     }
 
     /**
@@ -64,6 +67,21 @@ public class Symbols {
         return columna;
     }
 
+    /**
+     * Obtiene la cantiad de parámetros de una función
+     * @return cantidad de parametros
+     */
+    public int getCantidadParametros() {
+        return cantidad_parametros;
+    }
+
+    /**
+     * Establece la cantidad de parámetros de una función.
+     * @param cantidad_parametros cantidad de parámetros
+     */
+    public void setCantidadParametros(int cantidad_parametros) {
+        this.cantidad_parametros = cantidad_parametros;
+    }
 
     @Override
     /**
@@ -71,6 +89,6 @@ public class Symbols {
      * @return Una cadena con la información del símbolo
      */
     public String toString() {
-        return String.format("  %-20s %-12s %-10s %-8d %d", nombre, categoria, tipo, fila, columna);
+        return String.format("  %-20s %-12s %-10s %-8d %d", nombre, categoria, tipo, cantidad_parametros, fila, columna);
     } 
 }

@@ -49,16 +49,20 @@ Agregar la siguiente ruta al PATH del sistema:
 C:\jflex\bin
 ---
 
-## Ejecucion
+## Ejecucion Windows
 
-> IMPORTANTE: Todos los comandos deben ejecutarse estando ubicado dentro de la carpeta `programa`.
+> IMPORTANTE: El comando debe ejecutarse estando ubicado dentro de la carpeta `programa`.
 
-Ejecutar los siguientes comandos en orden:
+Ejecutar el siguiente comando:
 
-**1. Generar el scanner con JFlex:** jflex Lexer.flex
+**Opcion rapida (recomendado):** .\build_and_run.bat
 
-**2. Generar el parser con CUP:** java -jar C:\javacup\java-cup-11b.jar Parser.cup
+**Opcion manual (paso a paso):**
 
-**3. Compilar todos los archivos Java:** javac *.java
+**1. Generar el scanner con JFlex:** jflex -d generated\lexer parser_flex\Lexer.flex
 
-**4. Ejecutar el programa:** java Main prueba.txt
+**2. Generar el parser con CUP:** java -jar C:\javacup\java-cup-11b.jar -destdir generated\parser parser_flex\Parser.cup
+
+**3. Compilar todos los archivos Java:** javac -cp ".;generated\lexer;generated\parser;C:\javacup\java-cup-11b-runtime.jar" clases\*.java generated\lexer\*.java generated\parser\*.java
+
+**4. Ejecutar el programa:** java -cp ".;clases;generated\lexer;generated\parser;C:\javacup\java-cup-11b-runtime.jar" Main archivos_prueba\prueba3.txt

@@ -1,10 +1,10 @@
-char~contar_letras<||> |:
-	int~x!
+char~contar_letras<|int~x,int~y|> |:
+	int~z!
 :| 
 
 
 empty~__main__ <||> |:
-	int~x<-10.2!
+	int~x<-contar_letras<||>!
 
 :| 
 

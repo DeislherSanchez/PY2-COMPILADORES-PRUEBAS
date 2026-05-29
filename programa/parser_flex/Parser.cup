@@ -43,12 +43,17 @@ parser code {:
         return funcion_agregada;
     }
 
+    /* atributos auxiliares para el manejo de arreglos*/
     public String tipo_arreglo_actual = "";
     public int cantidad_filas_esperadas = 0;
     public int cantidad_columnas_esperadas = 0;
     public int filas_encontradas = 0;
     public int columnas_encontradas = 0;
     public boolean arreglo_valido = true;
+    
+    /* atributos auxiliares para el manejo de parametros de funciones*/
+    public int parametros_actuales = 0;
+    public int argumentos_actuales = 0;
 :}
 
 /* ── Terminales ── */
@@ -135,20 +140,28 @@ main ::= EMPTY SEPARATOR MAIN PAREN_OPEN PAREN_CLOSE {: parser.tabla.abrir_scope
 /*  funciones  */
 crear_funcion ::= tipo_dato:t SEPARATOR ID:id 
 {: 
-    boolean funcion_agregada = parser.agregar_funcion(new Symbols(id, "funcion", t, idleft + 1, idright + 1));
+    Symbols funcion = new Symbols(id, "funcion", t, idleft + 1, idright + 1);
+
+    boolean funcion_agregada = parser.agregar_funcion(funcion);
     if (funcion_agregada) {
         parser.tabla.abrir_scope_funcion(id); 
     }
-:} PAREN_OPEN opt_parametros PAREN_CLOSE BLOCK_START opt_lista_sentencias BLOCK_END
+:} PAREN_OPEN opt_parametros PAREN_CLOSE 
+{:
+    Symbols funcion = parser.tabla.buscar_funcion(id);
+    if (funcion != null) {
+        funcion.setCantidadParametros(parser.parametros_actuales);
+    }
+:} BLOCK_START opt_lista_sentencias BLOCK_END
 {: 
     if (parser.tabla.getScopeActual() != null) {
         parser.tabla.cerrar_scope();
     }
 :};
 
-opt_parametros ::= | lista_parametros;
+opt_parametros ::= {: parser.parametros_actuales = 0; :}| lista_parametros;
 
-lista_parametros ::= parametro | lista_parametros COMMA parametro;
+lista_parametros ::= parametro {: parser.parametros_actuales = 1; :} | lista_parametros COMMA parametro {: parser.parametros_actuales++; :};
 
 parametro ::= tipo_dato:t SEPARATOR ID:id {: parser.agregar_simbolo(new Symbols(id, "parametro", t, idleft + 1, idright + 1)); :};
 
@@ -339,13 +352,16 @@ llamada_funcion ::= ID:id PAREN_OPEN opt_args PAREN_CLOSE
         parser.semantic_error("Error semántico: '" + id + "' no es una función");
         RESULT = "error";
     } else {
+        if (s.getCantidadParametros() != parser.argumentos_actuales) {
+            parser.semantic_error("Error semántico: la función '" + id + "' esperaba " + s.getCantidadParametros() + " parámetros pero recibió " + parser.argumentos_actuales);
+        }
         RESULT = s.getTipo();
     }
 :};
 
-opt_args ::= | lista_args;
+opt_args ::= {: parser.argumentos_actuales = 0; :}| lista_args;
 
-lista_args ::= expresion | lista_args COMMA expresion;
+lista_args ::= expresion {: parser.argumentos_actuales = 1; :} | lista_args COMMA expresion {: parser.argumentos_actuales++; :} ;
 
 /*  expresiones */
 
