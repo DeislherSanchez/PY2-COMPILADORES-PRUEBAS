@@ -130,32 +130,46 @@ lista_funciones ::= | lista_funciones crear_funcion;
 main ::= EMPTY SEPARATOR MAIN PAREN_OPEN PAREN_CLOSE {: parser.tabla.abrir_scope_funcion("__main__"); :} BLOCK_START opt_lista_sentencias BLOCK_END {: parser.tabla.cerrar_scope(); :};
 
 /*  funciones  */
-crear_funcion ::= tipo_dato:t SEPARATOR ID:id 
-{: 
+crear_funcion ::= tipo_dato:t SEPARATOR ID:id
+{:
     Symbols funcion = new Symbols(id, "funcion", t, idleft + 1, idright + 1);
 
     boolean funcion_agregada = parser.agregar_funcion(funcion);
     if (funcion_agregada) {
-        parser.tabla.abrir_scope_funcion(id); 
+        parser.tabla.abrir_scope_funcion(id);
     }
-:} PAREN_OPEN opt_parametros PAREN_CLOSE 
+:}
+PAREN_OPEN opt_parametros PAREN_CLOSE
 {:
     Symbols funcion = parser.tabla.buscar_funcion(id);
+
     if (funcion != null) {
         funcion.setCantidadParametros(parser.funciones.parametros_actuales);
+        for (String tipo : parser.funciones.tipos_parametros_actuales) {
+            funcion.agregarTipoParametro(tipo);
+        }
     }
-:} BLOCK_START opt_lista_sentencias BLOCK_END
-{: 
+:}
+BLOCK_START opt_lista_sentencias BLOCK_END
+{:
     if (parser.tabla.getScopeActual() != null) {
         parser.tabla.cerrar_scope();
     }
 :};
 
-opt_parametros ::= {: parser.funciones.parametros_actuales = 0; :}| lista_parametros;
+opt_parametros ::=
+{:
+    parser.funciones.parametros_actuales = 0;
+    parser.funciones.tipos_parametros_actuales.clear();
+:} | lista_parametros;
 
 lista_parametros ::= parametro {: parser.funciones.parametros_actuales = 1; :} | lista_parametros COMMA parametro {: parser.funciones.parametros_actuales++; :};
 
-parametro ::= tipo_dato:t SEPARATOR ID:id {: parser.agregar_simbolo(new Symbols(id, "parametro", t, idleft + 1, idright + 1)); :};
+parametro ::= tipo_dato:t SEPARATOR ID:id
+{: 
+    parser.funciones.tipos_parametros_actuales.add(t);
+    parser.agregar_simbolo(new Symbols(id, "parametro", t, idleft + 1, idright + 1)); 
+:};
 
 /*  tipos  */
 
@@ -332,26 +346,50 @@ cout ::= COUT PAREN_OPEN expresion PAREN_CLOSE END_EXPR;
 
 /*  llamada a funcion */
 
-llamada_funcion ::= ID:id PAREN_OPEN opt_args PAREN_CLOSE 
+llamada_funcion ::= ID:id PAREN_OPEN
+{:
+    parser.funciones.argumentos_actuales = 0;
+    parser.funciones.tipos_argumentos_actuales.clear();
+:}
+opt_args PAREN_CLOSE
 {:
     Symbols s = parser.tabla.buscar_funcion(id);
     if (s == null) {
         parser.semantic_error("Error semántico: función '" + id + "' no declarada");
         RESULT = "error";
-    } else if (!s.getCategoria().equals("funcion")) {
+    }
+    else if (!s.getCategoria().equals("funcion")) {
         parser.semantic_error("Error semántico: '" + id + "' no es una función");
         RESULT = "error";
-    } else {
+    }
+    else {
         if (s.getCantidadParametros() != parser.funciones.argumentos_actuales) {
             parser.semantic_error("Error semántico: la función '" + id + "' esperaba " + s.getCantidadParametros() + " parámetros pero recibió " + parser.funciones.argumentos_actuales);
+        } else {
+            for (int i = 0; i < s.getTiposParametros().size(); i++) {
+                String tipo_esperado = s.getTiposParametros().get(i);
+                String tipo_recibido = parser.funciones.tipos_argumentos_actuales.get(i);
+                if (!tipo_esperado.equals(tipo_recibido)) {
+                    parser.semantic_error("Error semántico: en la llamada a '" + id + "' el parámetro " + (i + 1) + " esperaba un valor de tipo '" + tipo_esperado + "' pero recibió '" + tipo_recibido + "'");
+                    break;
+                }
+            }
         }
         RESULT = s.getTipo();
     }
 :};
 
-opt_args ::= {: parser.funciones.argumentos_actuales = 0; :}| lista_args;
+opt_args ::= | lista_args;
 
-lista_args ::= expresion {: parser.funciones.argumentos_actuales = 1; :} | lista_args COMMA expresion {: parser.funciones.argumentos_actuales++; :} ;
+lista_args ::= expresion:e
+{: 
+    parser.funciones.argumentos_actuales = 1; 
+    parser.funciones.tipos_argumentos_actuales.add(e);
+:} | lista_args COMMA expresion:e 
+{: 
+    parser.funciones.argumentos_actuales++; 
+    parser.funciones.tipos_argumentos_actuales.add(e);
+:} ;
 
 /*  expresiones */
 

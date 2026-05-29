@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 /**
  * Clase que representa un símbolo en la tabla de símbolos, con su nombre, categoría, tipo y posición (fila y columna).
  */
@@ -8,6 +10,7 @@ public class Symbols {
     private int fila;
     private int columna;
     private int cantidad_parametros;
+    private ArrayList<String> tipos_parametros;
 
 
     /**
@@ -25,6 +28,7 @@ public class Symbols {
         this.fila = fila;
         this.columna = columna;
         this.cantidad_parametros = 0;
+        this.tipos_parametros = new ArrayList<>();
     }
 
     /**
@@ -83,12 +87,20 @@ public class Symbols {
         this.cantidad_parametros = cantidad_parametros;
     }
 
+    public ArrayList<String> getTiposParametros() {
+        return tipos_parametros;
+    }
+
+    public void agregarTipoParametro(String tipo) {
+        tipos_parametros.add(tipo);
+    }
+
     @Override
     /**
      * Muestra la información del símbolo en un formato legible, con el nombre, categoría, tipo y posición (fila y columna).
      * @return Una cadena con la información del símbolo
      */
     public String toString() {
-        return String.format("  %-20s %-12s %-10s %-8d %d", nombre, categoria, tipo, cantidad_parametros, fila, columna);
+        return String.format("  %-20s %-12s %-10s %-8d %-8d %-8d", nombre, categoria, tipo, cantidad_parametros, fila, columna);
     } 
 }

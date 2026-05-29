@@ -1,4 +1,4 @@
-Token: CHAR, Lexema: char
+Token: INT, Lexema: int
 Token: SEPARATOR, Lexema: ~
 Token: ID, Lexema: contar_letras
 Token: PAREN_OPEN, Lexema: <|
@@ -28,6 +28,11 @@ Token: ID, Lexema: x
 Token: ASSIGN, Lexema: <-
 Token: ID, Lexema: contar_letras
 Token: PAREN_OPEN, Lexema: <|
+Token: INT_LITERAL, Lexema: 1
+Token: COMMA, Lexema: ,
+Token: INT_LITERAL, Lexema: 10
+Token: COMMA, Lexema: ,
+Token: FLOAT_LITERAL, Lexema: 10.2
 Token: PAREN_CLOSE, Lexema: |>
 Token: END_EXPR, Lexema: !
 Token: BLOCK_END, Lexema: :|
