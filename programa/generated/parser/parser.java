@@ -821,17 +821,9 @@ public class parser extends java_cup.runtime.lr_parser {
         return funcion_agregada;
     }
 
-    /* atributos auxiliares para el manejo de arreglos*/
-    public String tipo_arreglo_actual = "";
-    public int cantidad_filas_esperadas = 0;
-    public int cantidad_columnas_esperadas = 0;
-    public int filas_encontradas = 0;
-    public int columnas_encontradas = 0;
-    public boolean arreglo_valido = true;
-    
-    /* atributos auxiliares para el manejo de parametros de funciones*/
-    public int parametros_actuales = 0;
-    public int argumentos_actuales = 0;
+    /* auxiliares para el manejo de arreglos y funciones */
+    public Arreglos arreglos = new Arreglos();
+    public Funciones funciones = new Funciones();
 
 
 /** Cup generated class to encapsulate user supplied action code.*/
@@ -954,7 +946,7 @@ class CUP$parser$actions {
 
     Symbols funcion = parser.tabla.buscar_funcion(id);
     if (funcion != null) {
-        funcion.setCantidadParametros(parser.parametros_actuales);
+        funcion.setCantidadParametros(parser.funciones.parametros_actuales);
     }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$2",51, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -986,7 +978,7 @@ class CUP$parser$actions {
           case 9: // opt_parametros ::= 
             {
               Object RESULT =null;
-		 parser.parametros_actuales = 0; 
+		 parser.funciones.parametros_actuales = 0; 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("opt_parametros",4, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1004,7 +996,7 @@ class CUP$parser$actions {
           case 11: // lista_parametros ::= parametro 
             {
               Object RESULT =null;
-		 parser.parametros_actuales = 1; 
+		 parser.funciones.parametros_actuales = 1; 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("lista_parametros",5, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1013,7 +1005,7 @@ class CUP$parser$actions {
           case 12: // lista_parametros ::= lista_parametros COMMA parametro 
             {
               Object RESULT =null;
-		 parser.parametros_actuales++; 
+		 parser.funciones.parametros_actuales++; 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("lista_parametros",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1317,30 +1309,28 @@ class CUP$parser$actions {
 		int ccleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
 		int ccright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Numero cc = (Numero)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
-
-    parser.tipo_arreglo_actual = t;
-    parser.filas_encontradas = 0;
-    parser.columnas_encontradas = 0;
-    parser.arreglo_valido = true;
+ 
+    parser.arreglos.reiniciar();
+    parser.arreglos.tipo_arreglo_actual = t;
 
     /* validar el tipo del arreglo */
     if (!t.equals("int") && !t.equals("float")) {
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": no es posible crear un arreglo de tipo '" + t + "'. Los arreglos solo pueden ser de tipo int o float");
-        parser.arreglo_valido = false;
+        parser.arreglos.arreglo_valido = false;
     }
 
     /* validar el tipo de las dimensiones */
-    if (parser.arreglo_valido) {
+    if (parser.arreglos.arreglo_valido) {
         if (!cf.getTipo().equals("int") || !cc.getTipo().equals("int")) {
             parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": las dimensiones de un arreglo solo pueden ser enteros");
-            parser.arreglo_valido = false;
+            parser.arreglos.arreglo_valido = false;
         }
     }
 
     /* guardar dimensiones */
-    if (parser.arreglo_valido) {
-        parser.cantidad_filas_esperadas = Integer.parseInt(cf.getValor());
-        parser.cantidad_columnas_esperadas = Integer.parseInt(cc.getValor());
+    if (parser.arreglos.arreglo_valido) {
+        parser.arreglos.cantidad_filas_esperadas = Integer.parseInt(cf.getValor());
+        parser.arreglos.cantidad_columnas_esperadas = Integer.parseInt(cc.getValor());
     }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$3",52, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1366,14 +1356,14 @@ class CUP$parser$actions {
 		int ccright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).right;
 		Numero cc = (Numero)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
 		 
-    if (parser.arreglo_valido) {
+    if (parser.arreglos.arreglo_valido) {
         /* validar filas*/
-        if (parser.filas_encontradas > 0 && parser.filas_encontradas != parser.cantidad_filas_esperadas) {
-            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": el arreglo tiene " + parser.filas_encontradas + " filas pero se declararon " + parser.cantidad_filas_esperadas);
-            parser.arreglo_valido = false;
+        if (parser.arreglos.filas_encontradas > 0 && parser.arreglos.filas_encontradas != parser.arreglos.cantidad_filas_esperadas) {
+            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": el arreglo tiene " + parser.arreglos.filas_encontradas + " filas pero se declararon " + parser.arreglos.cantidad_filas_esperadas);
+            parser.arreglos.arreglo_valido = false;
         }
     }
-    if (parser.arreglo_valido) {
+    if (parser.arreglos.arreglo_valido) {
         parser.agregar_simbolo(new Symbols(id, "arreglo", t, idleft + 1, idright + 1));
     }
 
@@ -1412,7 +1402,7 @@ class CUP$parser$actions {
           case 46: // lista_filas ::= fila_arreglo 
             {
               Object RESULT =null;
-		 parser.filas_encontradas = 1; 
+		 parser.arreglos.filas_encontradas = 1; 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("lista_filas",16, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1421,7 +1411,7 @@ class CUP$parser$actions {
           case 47: // lista_filas ::= lista_filas COMMA fila_arreglo 
             {
               Object RESULT =null;
-		 parser.filas_encontradas++; 
+		 parser.arreglos.filas_encontradas++; 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("lista_filas",16, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1433,28 +1423,28 @@ class CUP$parser$actions {
 		int nleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
 		int nright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
 		Numero n = (Numero)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
-		
-    parser.columnas_encontradas++;
+		 
+    parser.arreglos.columnas_encontradas++;
     /* validar columnas */
-    if (parser.arreglo_valido) {
-        if (parser.columnas_encontradas != parser.cantidad_columnas_esperadas) {
-            int fila_actual = parser.filas_encontradas + 1;
-            parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": la fila " + fila_actual + " tiene " + parser.columnas_encontradas + " elementos pero se esperaban " + parser.cantidad_columnas_esperadas);
-            parser.arreglo_valido = false;
+    if (parser.arreglos.arreglo_valido) {
+        if (parser.arreglos.columnas_encontradas != parser.arreglos.cantidad_columnas_esperadas) {
+            int fila_actual = parser.arreglos.filas_encontradas + 1;
+            parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": la fila " + fila_actual + " tiene " + parser.arreglos.columnas_encontradas + " elementos pero se esperaban " + parser.arreglos.cantidad_columnas_esperadas);
+            parser.arreglos.arreglo_valido = false;
         }
     }
     /* validar tipo de los elementos */
-    if (parser.arreglo_valido) {
-        if (parser.tipo_arreglo_actual.equals("int") && !n.getTipo().equals("int")) {
+    if (parser.arreglos.arreglo_valido) {
+        if (parser.arreglos.tipo_arreglo_actual.equals("int") && !n.getTipo().equals("int")) {
             parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo int");
-            parser.arreglo_valido = false;
+            parser.arreglos.arreglo_valido = false;
         }
-        if (parser.tipo_arreglo_actual.equals("float") && !n.getTipo().equals("float")) {
+        if (parser.arreglos.tipo_arreglo_actual.equals("float") && !n.getTipo().equals("float")) {
             parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo float");
-            parser.arreglo_valido = false;
+            parser.arreglos.arreglo_valido = false;
         }
     }
-    parser.columnas_encontradas = 0;
+    parser.arreglos.columnas_encontradas = 0;
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("fila_arreglo",15, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1476,18 +1466,18 @@ class CUP$parser$actions {
 		int nleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
 		int nright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Numero n = (Numero)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
-		
-    if (parser.arreglo_valido) {
-        parser.columnas_encontradas++;
+		 
+    if (parser.arreglos.arreglo_valido) {
+        parser.arreglos.columnas_encontradas++;
         /* validar tipo de los elementos */
-        if (parser.tipo_arreglo_actual.equals("int") && !n.getTipo().equals("int")) {
+        if (parser.arreglos.tipo_arreglo_actual.equals("int") && !n.getTipo().equals("int")) {
             parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo int");
-            parser.arreglo_valido = false;
+            parser.arreglos.arreglo_valido = false;
         }
         /* validar tipo de los elementos */
-        if (parser.tipo_arreglo_actual.equals("float") && !n.getTipo().equals("float")) {
+        if (parser.arreglos.tipo_arreglo_actual.equals("float") && !n.getTipo().equals("float")) {
             parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo float");
-            parser.arreglo_valido = false;
+            parser.arreglos.arreglo_valido = false;
         }
     }
 
@@ -1750,8 +1740,8 @@ class CUP$parser$actions {
         parser.semantic_error("Error semántico: '" + id + "' no es una función");
         RESULT = "error";
     } else {
-        if (s.getCantidadParametros() != parser.argumentos_actuales) {
-            parser.semantic_error("Error semántico: la función '" + id + "' esperaba " + s.getCantidadParametros() + " parámetros pero recibió " + parser.argumentos_actuales);
+        if (s.getCantidadParametros() != parser.funciones.argumentos_actuales) {
+            parser.semantic_error("Error semántico: la función '" + id + "' esperaba " + s.getCantidadParametros() + " parámetros pero recibió " + parser.funciones.argumentos_actuales);
         }
         RESULT = s.getTipo();
     }
@@ -1764,7 +1754,7 @@ class CUP$parser$actions {
           case 74: // opt_args ::= 
             {
               Object RESULT =null;
-		 parser.argumentos_actuales = 0; 
+		 parser.funciones.argumentos_actuales = 0; 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("opt_args",31, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1782,7 +1772,7 @@ class CUP$parser$actions {
           case 76: // lista_args ::= expresion 
             {
               Object RESULT =null;
-		 parser.argumentos_actuales = 1; 
+		 parser.funciones.argumentos_actuales = 1; 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("lista_args",32, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1791,7 +1781,7 @@ class CUP$parser$actions {
           case 77: // lista_args ::= lista_args COMMA expresion 
             {
               Object RESULT =null;
-		 parser.argumentos_actuales++; 
+		 parser.funciones.argumentos_actuales++; 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("lista_args",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
