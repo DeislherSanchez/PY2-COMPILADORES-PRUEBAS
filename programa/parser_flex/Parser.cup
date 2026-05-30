@@ -1,4 +1,5 @@
 import java_cup.runtime.*;
+import java.util.ArrayList;
 
 parser code {:
 
@@ -100,8 +101,8 @@ non terminal sentencia_break;
 non terminal cin;
 non terminal cout;
 non terminal String llamada_funcion;
-non terminal opt_args;
-non terminal lista_args;
+non terminal ArrayList<String> opt_args;
+non terminal ArrayList<String> lista_args;
 non terminal String acceso_arreglo;
 non terminal String tipo_dato;
 non terminal String expresion;
@@ -304,26 +305,20 @@ acceso_arreglo ::= ID:id INDEX_START literal_numerico:nf INDEX_END INDEX_START l
     if (s == null) {
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": arreglo '" + id + "' no declarado");
         RESULT = "error";
+    } else if (!s.getCategoria().equals("arreglo")) {
+        parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": '" + id + "' no es un arreglo");
     }
     else {
         RESULT = s.getTipo();
 
         /* validar fila */
         if (!nf.getTipo().equals("int")) {
-            parser.semantic_error(
-                "Error semántico: en línea " + (nfleft + 1) +
-                ", columna " + (nfright + 1) +
-                ": el índice de fila debe ser de tipo int"
-            );
+            parser.semantic_error("Error semántico: en línea " + (nfleft + 1) + ", columna " + (nfright + 1) + ": el índice de fila debe ser de tipo int");
         }
 
         /* validar columna */
         if (!nc.getTipo().equals("int")) {
-            parser.semantic_error(
-                "Error semántico: en línea " + (ncleft + 1) +
-                ", columna " + (ncright + 1) +
-                ": el índice de columna debe ser de tipo int"
-            );
+            parser.semantic_error("Error semántico: en línea " + (ncleft + 1) + ", columna " + (ncright + 1) + ": el índice de columna debe ser de tipo int");
         }
     }
 :};
@@ -374,12 +369,7 @@ cout ::= COUT PAREN_OPEN expresion:e PAREN_CLOSE END_EXPR;
 
 /*  llamada a funcion */
 
-llamada_funcion ::= ID:id PAREN_OPEN
-{:
-    parser.funciones.argumentos_actuales = 0;
-    parser.funciones.tipos_argumentos_actuales.clear();
-:}
-opt_args PAREN_CLOSE
+llamada_funcion ::= ID:id PAREN_OPEN opt_args:args PAREN_CLOSE
 {:
     Symbols s = parser.tabla.buscar_funcion(id);
     if (s == null) {
@@ -391,12 +381,12 @@ opt_args PAREN_CLOSE
         RESULT = "error";
     }
     else {
-        if (s.getCantidadParametros() != parser.funciones.argumentos_actuales) {
-            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": la función '" + id + "' esperaba " + s.getCantidadParametros() + " parámetros pero recibió " + parser.funciones.argumentos_actuales);
+        if (s.getCantidadParametros() != args.size()) {
+            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": la función '" + id + "' esperaba " + s.getCantidadParametros() + " parámetros pero recibió " + args.size());
         } else {
-            for (int i = 0; i < s.getTiposParametros().size(); i++) {
+            for (int i = 0; i < args.size(); i++) {
                 String tipo_esperado = s.getTiposParametros().get(i);
-                String tipo_recibido = parser.funciones.tipos_argumentos_actuales.get(i);
+                String tipo_recibido = args.get(i);
                 if (!tipo_esperado.equals(tipo_recibido)) {
                     parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": en la llamada a '" + id + "' el parámetro " + (i + 1) + " esperaba un valor de tipo '" + tipo_esperado + "' pero recibió '" + tipo_recibido + "'");
                     break;
@@ -407,17 +397,21 @@ opt_args PAREN_CLOSE
     }
 :};
 
-opt_args ::= | lista_args;
+opt_args ::= {: RESULT = new ArrayList<String>(); :} | lista_args:l 
+{:
+    RESULT = l;
+:};
 
 lista_args ::= expresion:e
 {: 
-    parser.funciones.argumentos_actuales = 1; 
-    parser.funciones.tipos_argumentos_actuales.add(e);
-:} | lista_args COMMA expresion:e 
+    ArrayList<String> tipos = new ArrayList<String>();
+    tipos.add(e);
+    RESULT = tipos;
+:} | lista_args:l COMMA expresion:e 
 {: 
-    parser.funciones.argumentos_actuales++; 
-    parser.funciones.tipos_argumentos_actuales.add(e);
-:} ;
+    l.add(e);
+    RESULT = l;
+:};
 
 /*  expresiones */
 
@@ -445,7 +439,12 @@ expresion_unaria ::= expresion_primaria:e {: RESULT = e; :} | MINUS expresion_un
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
         RESULT = "error";
     } else {
-        RESULT = s.getTipo();
+        if (!s.getTipo().equals("int") && !s.getTipo().equals("float")) {
+            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": el operador '++' solo puede aplicarse a variables de tipo int o float");
+            RESULT = "error";
+        } else {
+            RESULT = s.getTipo();
+        }
     }
 :} | DECREMENT ID:id
 {:
@@ -455,7 +454,12 @@ expresion_unaria ::= expresion_primaria:e {: RESULT = e; :} | MINUS expresion_un
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
         RESULT = "error";
     } else {
-        RESULT = s.getTipo();
+        if (!s.getTipo().equals("int") && !s.getTipo().equals("float")) {
+            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": el operador '--' solo puede aplicarse a variables de tipo int o float");
+            RESULT = "error";
+        } else {
+            RESULT = s.getTipo();
+        }
     }
 :};
 

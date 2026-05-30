@@ -1,30 +1,30 @@
 import java.util.ArrayList;
 
 /**
- * Estado temporal para validar declaraciones y llamadas de funciones.
+ * Clase encargada de almacenar información temporal relacionada con la declaración y llamada de 
+ * funciones durante el análisis semántico.
  */
 public class Funciones {
+
     public int parametros_actuales;
-    public int argumentos_actuales;
     public ArrayList<String> tipos_parametros_actuales;
-    public ArrayList<String> tipos_argumentos_actuales;
     public boolean declaracion_valida;
 
+
     /**
-     * Inicializa el estado de validacion de funciones.
+     * Constructor de la clase.
+     * Inicializa los contadores de parámetros y argumentos mediante la llamada al método reiniciar().
      */
     public Funciones() {
         reiniciar();
     }
 
     /**
-     * Restablece el estado para una nueva declaracion o llamada de funcion.
+     * Restablece los contadores de parámetros y argumentos a sus valores iniciales.
      */
     public void reiniciar() {
         parametros_actuales = 0;
-        argumentos_actuales = 0;
         tipos_parametros_actuales = new ArrayList<>();
-        tipos_argumentos_actuales = new ArrayList<>();
         declaracion_valida = true;
     }
 }

@@ -1,91 +1,16 @@
-int~suma<|int~a,int~b|> |:
-	int~x!
-	int~x!                  ¡¡ variable duplicada
+int~suma<|int~a, int~b|>
+|:
+    int~x!
 :|
 
-int~suma<|float~a|> |:    ¡¡ función duplicada
+int~doble<|int~x|>
+|:
+    int~y!
 :|
 
-int~parametros<|int~x,int~x|> |:   ¡¡ parámetro duplicado
-:|
-
-empty~__main__<||> |:
-
-	¡¡ -------------------------
-	¡¡ VARIABLES
-	¡¡ -------------------------
-
-	int~a<-10!
-	float~b<-"hola"!        ¡¡ asignación incompatible
-
-	c<-5!                   ¡¡ variable no declarada
-
-	cout<|z|>!             ¡¡ variable no declarada
-
-	++contador!            ¡¡ variable no declarada
-
-	¡¡ -------------------------
-	¡¡ FUNCIONES
-	¡¡ -------------------------
-
-	int~r1<-suma<|1|>!                  ¡¡ faltan parámetros
-
-	int~r2<-suma<|1,2,3|>!              ¡¡ sobran parámetros
-
-	int~r3<-suma<|1,2.5|>!              ¡¡ tipo incorrecto
-
-	int~r4<-inexistente<|1,2|>!         ¡¡ función inexistente
-
-	¡¡ -------------------------
-	¡¡ ARREGLOS
-	¡¡ -------------------------
-
-	string~mat1<<2>><<2>>!             ¡¡ tipo inválido
-
-	int~mat2<<2.5>><<2>>!              ¡¡ dimensión no entera
-
-	int~mat3<<2>><<2>><-
-	|:
-		|:1,2,3:|,
-		|:4,5,6:|
-	:|!                               ¡¡ demasiadas columnas
-
-	int~mat4<<2>><<2>><-
-	|:
-		|:1,2:|
-	:|!                               ¡¡ faltan filas
-
-	int~mat5<<2>><<2>><-
-	|:
-		|:1,2:|,
-		|:3,4.5:|
-	:|!                               ¡¡ float en arreglo int
-
-	matInexistente<<1>><<1>><-5!      ¡¡ arreglo inexistente
-
-	mat5<<"hola">><<1>><-5!           ¡¡ índice fila inválido
-
-	mat5<<1>><<2.5>><-5!              ¡¡ índice columna inválido
-
-	¡¡ -------------------------
-	¡¡ CIN
-	¡¡ -------------------------
-
-	string~texto!
-
-	cin<|texto|>!                      ¡¡ tipo inválido
-
-	cin<|noExiste|>!                   ¡¡ variable inexistente
-
-	¡¡ -------------------------
-	¡¡ SWITCH
-	¡¡ -------------------------
-
-	switch<|a|> |:
-		case~"hola":
-			break!
-		default:
-			break!
-	:|
-
+empty~__main__<||>
+|:
+    char~x!
+    --x!
+    int~resultado<- suma<|doble<|2|>, doble<|3|>|>!
 :|

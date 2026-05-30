@@ -1,7 +1,9 @@
 /**
- * Estado temporal para validar la declaracion y la asignacion de arreglos.
+ * Clase encargada de almacenar y controlar la información relacionada con la validación y 
+ * procesamiento de arreglos multidimensionales.
  */
 public class Arreglos {
+
     public String tipo_arreglo_actual;
     public int cantidad_filas_esperadas;
     public int cantidad_columnas_esperadas;
@@ -10,14 +12,19 @@ public class Arreglos {
     public boolean arreglo_valido;
 
     /**
-     * Inicializa el estado de validacion de arreglos.
+     * Constructor de la clase.
+     * Inicializa todos los atributos con sus valores por defecto
+     * mediante la llamada al método reiniciar().
      */
     public Arreglos() {
         reiniciar();
     }
 
     /**
-     * Restablece el estado para iniciar una nueva declaracion de arreglo.
+     * Restablece todos los atributos de control del arreglo a sus valores iniciales.
+     *
+     * Este método se utiliza cuando se inicia el análisis de un nuevo arreglo para evitar 
+     * que la información de análisis anterior afecte el procesamiento actual.
      */
     public void reiniciar() {
         tipo_arreglo_actual = "";
