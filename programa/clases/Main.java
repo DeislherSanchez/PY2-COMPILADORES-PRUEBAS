@@ -12,27 +12,27 @@ public class Main {
 
         try {
 
-            Reader readerLex = new BufferedReader(new FileReader(args[0]));
+            Reader reader_lex = new BufferedReader(new FileReader(args[0]));
             PrintWriter writer = new PrintWriter(new FileWriter(archivo_tokens));
-            Lexer lexer1 = new Lexer(readerLex);
+            Lexer lexer_1 = new Lexer(reader_lex);
             Symbol token;
 
-            while ((token = lexer1.next_token()).sym != sym.EOF) {
+            while ((token = lexer_1.next_token()).sym != sym.EOF) {
                 String nombre_token = sym.terminalNames[token.sym];
                 String lexema = (token.value != null) ? token.value.toString() : "";
                 writer.println("Token: " + nombre_token + ", Lexema: " + lexema);
             }
             writer.close();
-            readerLex.close();
+            reader_lex.close();
 
-            Reader readerPar = new BufferedReader(new FileReader(args[0]));
-            Lexer lexer2 = new Lexer(readerPar);
-            lexer2.set_notificar_errores(true);
-            parser parser = new parser(lexer2);
+            Reader reader_par = new BufferedReader(new FileReader(args[0]));
+            Lexer lexer_2 = new Lexer(reader_par);
+            lexer_2.set_notificar_errores(true);
+            parser parser = new parser(lexer_2);
             parser.parse();
-            readerPar.close();
+            reader_par.close();
 
-            int errores_lexicos = lexer1.get_errores();
+            int errores_lexicos = lexer_1.get_errores();
             int errores_sintacticos = parser.get_errores_sintacticos();
             int errores_semanticos = parser.get_errores_semanticos();
 

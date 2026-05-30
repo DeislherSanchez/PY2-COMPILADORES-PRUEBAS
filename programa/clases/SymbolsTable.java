@@ -22,7 +22,7 @@ public class SymbolsTable {
      * Obtiene el scope actual.
      * @return scope actual o null si no hay un scope abierto
      */
-    public Scope getScopeActual() {
+    public Scope get_scope_actual() {
         return scope_actual;
     }
 
@@ -43,7 +43,7 @@ public class SymbolsTable {
     public void abrir_scope(String nombre) {
         if (scope_actual != null) {
             Scope nuevo_bloque = new Scope(nombre, scope_actual);
-            scope_actual.getHijos().add(nuevo_bloque);
+            scope_actual.get_hijos().add(nuevo_bloque);
             scope_actual = nuevo_bloque;
         }
     }
@@ -52,8 +52,8 @@ public class SymbolsTable {
      * Cierra el scope actual.
      */
     public void cerrar_scope() {
-        if (scope_actual != null && scope_actual.getPadre() != null) {
-            scope_actual = scope_actual.getPadre();
+        if (scope_actual != null && scope_actual.get_padre() != null) {
+            scope_actual = scope_actual.get_padre();
         } else {
             scope_actual = null;
         }
@@ -65,10 +65,10 @@ public class SymbolsTable {
      */
     public boolean agregar_simbolo(Symbols s) {
         if (scope_actual != null) {
-            if (scope_actual.existe_en_scope_actual(s.getNombre())) {
+            if (scope_actual.existe_en_scope_actual(s.get_nombre())) {
                 return false;
             }
-            scope_actual.getSimbolos().add(s);
+            scope_actual.get_simbolos().add(s);
             return true;
         }
         return false;
@@ -81,7 +81,7 @@ public class SymbolsTable {
      */
     public boolean agregar_funcion(Symbols s) {
         for (Symbols f : funciones_globales) {
-            if (f.getNombre().equals(s.getNombre())) {
+            if (f.get_nombre().equals(s.get_nombre())) {
                 return false;
             }
         }
@@ -97,7 +97,7 @@ public class SymbolsTable {
      */
     public Symbols buscar_funcion(String nombre_funcion) {
         for (Symbols f : funciones_globales) {
-            if (f.getNombre().equals(nombre_funcion)) {
+            if (f.get_nombre().equals(nombre_funcion)) {
                 return f;
             }
         }
@@ -130,6 +130,71 @@ public class SymbolsTable {
     }
 
     /**
+     * Indica si el scope actual ya contiene una sentencia terminal.
+     */
+    public boolean hay_flujo_terminado() {
+        if (scope_actual == null) {
+            return false;
+        }
+        return scope_actual.get_flujo_terminado();
+    }
+
+    /**
+     * Marca el scope actual con una sentencia terminal.
+     */
+    public void marcar_flujo_terminado(String sentencia, int linea, int columna) {
+        if (scope_actual != null) {
+            scope_actual.marcar_flujo_terminado(sentencia, linea, columna);
+        }
+    }
+
+    public void reiniciar_flujo() {
+        if (scope_actual != null) {
+            scope_actual.reiniciar_flujo();
+        }
+    }
+
+    public String get_sentencia_terminal() {
+        if (scope_actual == null) {
+            return "";
+        }
+
+        return scope_actual.get_sentencia_terminal();
+    }
+
+    public int get_linea_terminal() {
+        if (scope_actual == null) {
+            return -1;
+        }
+
+        return scope_actual.get_linea_terminal();
+    }
+
+    public int get_columna_terminal() {
+        if (scope_actual == null) {
+            return -1;
+        }
+
+        return scope_actual.get_columna_terminal();
+    }
+
+    /**
+     * Determina si el break se encuentra dentro de un
+     * do_while, case o default.
+     */
+    public boolean break_valido() {
+        Scope actual = scope_actual;
+        while (actual != null) {
+            String nombre = actual.get_nombre();
+            if (nombre.equals("do_while") || nombre.equals("case") || nombre.equals("default")) {
+                return true;
+            }
+            actual = actual.get_padre();
+        }
+        return false;
+    }
+
+    /**
      * Imprime la tabla de símbolos.
      * Muestra cada scope con su nombre y los símbolos declarados en ese scope, con su nombre, categoría, tipo y posición (fila y columna).
      */
@@ -157,16 +222,16 @@ public class SymbolsTable {
     private void imprimir_scope(Scope actual, int nivel) {
         String indent = "  ".repeat(nivel);
         String prefijo = (nivel == 0) ? "Scope: [" : "└── Scope: [";
-        System.out.println(indent + prefijo + actual.getNombre() + "]");
+        System.out.println(indent + prefijo + actual.get_nombre() + "]");
         
-        if (actual.getSimbolos().isEmpty() && actual.getHijos().isEmpty()) {
+        if (actual.get_simbolos().isEmpty() && actual.get_hijos().isEmpty()) {
             System.out.println(indent + "  (vacío)");
         }
 
-        for (Symbols s : actual.getSimbolos()) {
+        for (Symbols s : actual.get_simbolos()) {
             System.out.println(indent + "  ├── " + s.toString());
         }
-        for (Scope hijo : actual.getHijos()) {
+        for (Scope hijo : actual.get_hijos()) {
             imprimir_scope(hijo, nivel + 1);
         }
     }

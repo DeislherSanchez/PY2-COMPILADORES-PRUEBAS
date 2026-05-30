@@ -1,16 +1,11 @@
-int~suma<|int~a, int~b|>
+empty ~ __main__ <| |>
 |:
-    int~x!
-:|
+    int ~ _var_ <- 2 !
 
-int~doble<|int~x|>
-|:
-    int~y!
-:|
-
-empty~__main__<||>
-|:
-    char~x!
-    --x!
-    int~resultado<- suma<|doble<|2|>, doble<|3|>|>!
+    if <| _var_ |>
+    |:
+        return ~ _var_ !
+        cout <| "nunca entra" |> !
+        int ~ x <- 10 !
+    :|
 :|

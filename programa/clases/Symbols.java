@@ -36,7 +36,7 @@ public class Symbols {
      * Obtiene el nombre del símbolo.
      * @return El nombre del símbolo
      */
-    public String getNombre() {
+    public String get_nombre() {
         return nombre;
     }
 
@@ -44,7 +44,7 @@ public class Symbols {
      * Obtiene la categoría del símbolo.
      * @return La categoría del símbolo
      */
-    public String getCategoria() {
+    public String get_categoria() {
         return categoria;
     }
 
@@ -52,7 +52,7 @@ public class Symbols {
      * Obtiene el tipo del símbolo.
      * @return El tipo del símbolo
      */
-    public String getTipo() {
+    public String get_tipo() {
         return tipo;
     }
 
@@ -60,7 +60,7 @@ public class Symbols {
      * Obtiene la fila donde se encuentra el símbolo en el código fuente.
      * @return La fila del símbolo
      */
-    public int getFila() {
+    public int get_fila() {
         return fila;
     }
 
@@ -68,7 +68,7 @@ public class Symbols {
      * Obtiene la columna donde se encuentra el símbolo en el código fuente.
      * @return La columna del símbolo
      */
-    public int getColumna() {
+    public int get_columna() {
         return columna;
     }
 
@@ -76,7 +76,7 @@ public class Symbols {
      * Obtiene la cantidad de parametros de una funcion.
      * @return cantidad de parametros
      */
-    public int getCantidadParametros() {
+    public int get_cantidad_parametros() {
         return cantidad_parametros;
     }
 
@@ -84,7 +84,7 @@ public class Symbols {
      * Establece la cantidad de parámetros de una función.
      * @param cantidad_parametros cantidad de parámetros
      */
-    public void setCantidadParametros(int cantidad_parametros) {
+    public void set_cantidad_parametros(int cantidad_parametros) {
         this.cantidad_parametros = cantidad_parametros;
     }
 
@@ -92,7 +92,7 @@ public class Symbols {
      * Obtiene la lista de tipos de parametros de una funcion.
      * @return lista de tipos de parametros
      */
-    public ArrayList<String> getTiposParametros() {
+    public ArrayList<String> get_tipos_parametros() {
         return tipos_parametros;
     }
 
@@ -100,7 +100,7 @@ public class Symbols {
      * Agrega un tipo de parametro a la lista de la funcion.
      * @param tipo tipo del parametro
      */
-    public void agregarTipoParametro(String tipo) {
+    public void agregar_tipo_parametro(String tipo) {
         tipos_parametros.add(tipo);
     }
 

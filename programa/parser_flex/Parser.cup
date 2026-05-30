@@ -29,17 +29,17 @@ parser code {:
     public void agregar_simbolo(Symbols s) {
         boolean simbolo_agregado = tabla.agregar_simbolo(s);
         if (!simbolo_agregado) {
-            if (s.getCategoria().equals("parametro")) {
-                semantic_error("Error semántico: en línea " + s.getFila() + ", columna " + s.getColumna() + ": parametro '" + s.getNombre() + "'" + " es un duplicado");
+            if (s.get_categoria().equals("parametro")) {
+                semantic_error("Error semántico: en línea " + s.get_fila() + ", columna " + s.get_columna() + ": parametro '" + s.get_nombre() + "'" + " es un duplicado");
             } else {
-                semantic_error("Error semántico: en línea " + s.getFila() + ", columna " + s.getColumna() + ": variable '" + s.getNombre() + "'" + " no puede ser declaro en este scope porque ese nombre se usa para definir una variable o un parámetro");
+                semantic_error("Error semántico: en línea " + s.get_fila() + ", columna " + s.get_columna() + ": variable '" + s.get_nombre() + "'" + " no puede ser declaro en este scope porque ese nombre se usa para definir una variable o un parámetro");
             }
         }
     }
     public boolean agregar_funcion(Symbols s) {
         boolean funcion_agregada = tabla.agregar_funcion(s);
         if (!funcion_agregada) {
-            semantic_error("Error semántico: en línea " + s.getFila() + ", columna " + s.getColumna() + ": la función '" + s.getNombre() + "' ya fue declarada");
+            semantic_error("Error semántico: en línea " + s.get_fila() + ", columna " + s.get_columna() + ": la función '" + s.get_nombre() + "' ya fue declarada");
         }
         return funcion_agregada;
     }
@@ -119,6 +119,7 @@ non terminal String literal;
 non terminal Numero literal_numerico;
 non terminal String literal_caso;
 non terminal opt_lista_sentencias;
+non terminal control_flujo;
 
 start with programa;
 
@@ -146,9 +147,9 @@ PAREN_OPEN opt_parametros PAREN_CLOSE
     if (parser.funciones.declaracion_valida) {
         Symbols funcion = parser.tabla.buscar_funcion(id);
         if (funcion != null) {
-            funcion.setCantidadParametros(parser.funciones.parametros_actuales);
+            funcion.set_cantidad_parametros(parser.funciones.parametros_actuales);
             for (String tipo : parser.funciones.tipos_parametros_actuales) {
-                funcion.agregarTipoParametro(tipo);
+                funcion.agregar_tipo_parametro(tipo);
             }
         }
     }
@@ -187,7 +188,15 @@ opt_lista_sentencias ::= | lista_sentencias | error BLOCK_END;
 
 lista_sentencias ::= sentencia | lista_sentencias sentencia;
 
-sentencia ::= crear_variable | asignar_variable | crear_arreglo | modificar_arreglo | sentencia_if | sentencia_do_while | sentencia_switch | sentencia_return | sentencia_break | cin | cout | expresion END_EXPR | error END_EXPR;
+control_flujo ::= 
+{:
+    if (parser.tabla.hay_flujo_terminado()) {
+        parser.semantic_error("Error semántico en línea " + parser.tabla.get_linea_terminal() + ", columna " + parser.tabla.get_columna_terminal() + ": código inalcanzable después de '" + parser.tabla.get_sentencia_terminal()+ "'");
+    }
+:};
+
+
+sentencia ::= control_flujo crear_variable | control_flujo asignar_variable | control_flujo crear_arreglo | control_flujo modificar_arreglo | control_flujo sentencia_if | control_flujo sentencia_do_while | control_flujo sentencia_switch | control_flujo sentencia_return | sentencia_break | control_flujo cin | control_flujo cout | control_flujo expresion END_EXPR | error END_EXPR;
 
 /*  variables  */
 crear_variable ::= tipo_dato:t SEPARATOR ID:id opt_asignacion_variable:e END_EXPR 
@@ -222,7 +231,7 @@ crear_arreglo ::= tipo_dato:t SEPARATOR ID:id INDEX_START literal_numerico:cf IN
 
     /* validar el tipo de las dimensiones */
     if (parser.arreglos.arreglo_valido) {
-        if (!cf.getTipo().equals("int") || !cc.getTipo().equals("int")) {
+        if (!cf.get_tipo().equals("int") || !cc.get_tipo().equals("int")) {
             parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": las dimensiones de un arreglo solo pueden ser enteros");
             parser.arreglos.arreglo_valido = false;
         }
@@ -230,8 +239,8 @@ crear_arreglo ::= tipo_dato:t SEPARATOR ID:id INDEX_START literal_numerico:cf IN
 
     /* guardar dimensiones */
     if (parser.arreglos.arreglo_valido) {
-        parser.arreglos.cantidad_filas_esperadas = Integer.parseInt(cf.getValor());
-        parser.arreglos.cantidad_columnas_esperadas = Integer.parseInt(cc.getValor());
+        parser.arreglos.cantidad_filas_esperadas = Integer.parseInt(cf.get_valor());
+        parser.arreglos.cantidad_columnas_esperadas = Integer.parseInt(cc.get_valor());
     }
 :}
 
@@ -268,11 +277,11 @@ fila_arreglo ::= BLOCK_START literal_numerico:n lista_num_arreglo BLOCK_END
     }
     /* validar tipo de los elementos */
     if (parser.arreglos.arreglo_valido) {
-        if (parser.arreglos.tipo_arreglo_actual.equals("int") && !n.getTipo().equals("int")) {
+        if (parser.arreglos.tipo_arreglo_actual.equals("int") && !n.get_tipo().equals("int")) {
             parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo int");
             parser.arreglos.arreglo_valido = false;
         }
-        if (parser.arreglos.tipo_arreglo_actual.equals("float") && !n.getTipo().equals("float")) {
+        if (parser.arreglos.tipo_arreglo_actual.equals("float") && !n.get_tipo().equals("float")) {
             parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo float");
             parser.arreglos.arreglo_valido = false;
         }
@@ -285,12 +294,12 @@ lista_num_arreglo ::= | lista_num_arreglo COMMA literal_numerico:n
     if (parser.arreglos.arreglo_valido) {
         parser.arreglos.columnas_encontradas++;
         /* validar tipo de los elementos */
-        if (parser.arreglos.tipo_arreglo_actual.equals("int") && !n.getTipo().equals("int")) {
+        if (parser.arreglos.tipo_arreglo_actual.equals("int") && !n.get_tipo().equals("int")) {
             parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo int");
             parser.arreglos.arreglo_valido = false;
         }
         /* validar tipo de los elementos */
-        if (parser.arreglos.tipo_arreglo_actual.equals("float") && !n.getTipo().equals("float")) {
+        if (parser.arreglos.tipo_arreglo_actual.equals("float") && !n.get_tipo().equals("float")) {
             parser.semantic_error("Error semántico: en línea " + (nleft + 1) + ", columna " + (nright + 1) + ": los elementos del arreglo deben ser de tipo float");
             parser.arreglos.arreglo_valido = false;
         }
@@ -305,19 +314,19 @@ acceso_arreglo ::= ID:id INDEX_START literal_numerico:nf INDEX_END INDEX_START l
     if (s == null) {
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": arreglo '" + id + "' no declarado");
         RESULT = "error";
-    } else if (!s.getCategoria().equals("arreglo")) {
+    } else if (!s.get_categoria().equals("arreglo")) {
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": '" + id + "' no es un arreglo");
     }
     else {
-        RESULT = s.getTipo();
+        RESULT = s.get_tipo();
 
         /* validar fila */
-        if (!nf.getTipo().equals("int")) {
+        if (!nf.get_tipo().equals("int")) {
             parser.semantic_error("Error semántico: en línea " + (nfleft + 1) + ", columna " + (nfright + 1) + ": el índice de fila debe ser de tipo int");
         }
 
         /* validar columna */
-        if (!nc.getTipo().equals("int")) {
+        if (!nc.get_tipo().equals("int")) {
             parser.semantic_error("Error semántico: en línea " + (ncleft + 1) + ", columna " + (ncright + 1) + ": el índice de columna debe ser de tipo int");
         }
     }
@@ -344,9 +353,17 @@ caso ::= CASE SEPARATOR literal_caso:t COLON opt_lista_sentencias
 
 opt_default ::= | DEFAULT COLON opt_lista_sentencias;
 
-sentencia_return ::= RETURN SEPARATOR expresion END_EXPR;
+sentencia_return ::= RETURN:r SEPARATOR expresion END_EXPR
+{:
+    parser.tabla.marcar_flujo_terminado("return",rleft + 1,rright + 1);
+:} | RETURN error END_EXPR;
 
-sentencia_break ::= BREAK END_EXPR;
+sentencia_break ::= BREAK:b END_EXPR
+{:
+    if (!parser.tabla.break_valido()) {
+        parser.semantic_error("Error semántico en línea " + (bleft + 1) + ", columna " + (bright + 1) + ": 'break' solo puede utilizarse dentro de un do_while o switch.");
+    }
+:} | BREAK error END_EXPR;
 
 /*  CIN / COUT */
 
@@ -358,7 +375,7 @@ cin ::= CIN PAREN_OPEN ID:id PAREN_CLOSE END_EXPR
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
     }
     else {
-        String tipo = s.getTipo();
+        String tipo = s.get_tipo();
         if (!tipo.equals("int") && !tipo.equals("float")) {
             parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": cin solo puede leer variables de tipo int o float");
         }
@@ -376,16 +393,16 @@ llamada_funcion ::= ID:id PAREN_OPEN opt_args:args PAREN_CLOSE
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": función '" + id + "' no declarada");
         RESULT = "error";
     }
-    else if (!s.getCategoria().equals("funcion")) {
+    else if (!s.get_categoria().equals("funcion")) {
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": '" + id + "' no es una función");
         RESULT = "error";
     }
     else {
-        if (s.getCantidadParametros() != args.size()) {
-            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": la función '" + id + "' esperaba " + s.getCantidadParametros() + " parámetros pero recibió " + args.size());
+        if (s.get_cantidad_parametros() != args.size()) {
+            parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": la función '" + id + "' esperaba " + s.get_cantidad_parametros() + " parámetros pero recibió " + args.size());
         } else {
             for (int i = 0; i < args.size(); i++) {
-                String tipo_esperado = s.getTiposParametros().get(i);
+                String tipo_esperado = s.get_tipos_parametros().get(i);
                 String tipo_recibido = args.get(i);
                 if (!tipo_esperado.equals(tipo_recibido)) {
                     parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": en la llamada a '" + id + "' el parámetro " + (i + 1) + " esperaba un valor de tipo '" + tipo_esperado + "' pero recibió '" + tipo_recibido + "'");
@@ -393,7 +410,7 @@ llamada_funcion ::= ID:id PAREN_OPEN opt_args:args PAREN_CLOSE
                 }
             }
         }
-        RESULT = s.getTipo();
+        RESULT = s.get_tipo();
     }
 :};
 
@@ -439,11 +456,11 @@ expresion_unaria ::= expresion_primaria:e {: RESULT = e; :} | MINUS expresion_un
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
         RESULT = "error";
     } else {
-        if (!s.getTipo().equals("int") && !s.getTipo().equals("float")) {
+        if (!s.get_tipo().equals("int") && !s.get_tipo().equals("float")) {
             parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": el operador '++' solo puede aplicarse a variables de tipo int o float");
             RESULT = "error";
         } else {
-            RESULT = s.getTipo();
+            RESULT = s.get_tipo();
         }
     }
 :} | DECREMENT ID:id
@@ -454,11 +471,11 @@ expresion_unaria ::= expresion_primaria:e {: RESULT = e; :} | MINUS expresion_un
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
         RESULT = "error";
     } else {
-        if (!s.getTipo().equals("int") && !s.getTipo().equals("float")) {
+        if (!s.get_tipo().equals("int") && !s.get_tipo().equals("float")) {
             parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": el operador '--' solo puede aplicarse a variables de tipo int o float");
             RESULT = "error";
         } else {
-            RESULT = s.getTipo();
+            RESULT = s.get_tipo();
         }
     }
 :};
@@ -470,13 +487,13 @@ expresion_primaria ::= literal:l {: RESULT = l; :} | ID:id
         parser.semantic_error("Error semántico: en línea " + (idleft + 1) + ", columna " + (idright + 1) + ": variable '" + id + "' no declarada");
         RESULT = "error";
     } else {
-        RESULT = s.getTipo();
+        RESULT = s.get_tipo();
     }
 :} | llamada_funcion:f {: RESULT = f; :} | acceso_arreglo | PAREN_OPEN expresion PAREN_CLOSE;
 
 /*  literales */
-literal ::= literal_numerico:l {: RESULT = l.getTipo(); :} | STRING_LITERAL {: RESULT = "string"; :} | CHAR_LITERAL {: RESULT = "char"; :} | TRUE {: RESULT = "bool"; :} | FALSE {: RESULT = "bool"; :}; 
+literal ::= literal_numerico:l {: RESULT = l.get_tipo(); :} | STRING_LITERAL {: RESULT = "string"; :} | CHAR_LITERAL {: RESULT = "char"; :} | TRUE {: RESULT = "bool"; :} | FALSE {: RESULT = "bool"; :}; 
 
 literal_numerico ::= INT_LITERAL:i {: RESULT = new Numero("int", i); :} | FLOAT_LITERAL:f {: RESULT = new Numero("float", f); :} | FRAC_LITERAL:f {: RESULT = new Numero("float", f); :} | EXP_LITERAL:e {: RESULT = new Numero("float", e); :};
 
-literal_caso ::= literal_numerico:l {: RESULT = l.getTipo(); :} | CHAR_LITERAL {: RESULT = "char"; :};
+literal_caso ::= literal_numerico:l {: RESULT = l.get_tipo(); :} | CHAR_LITERAL {: RESULT = "char"; :};

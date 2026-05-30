@@ -19,7 +19,7 @@ public class Numero {
      * Obtiene el tipo del número.
      * @return El tipo del número
      */
-    public String getTipo() {
+    public String get_tipo() {
         return tipo;
     }
 
@@ -27,7 +27,7 @@ public class Numero {
      * Obtiene el valor del número.
      * @return El valor del número
      */
-    public String getValor() {
+    public String get_valor() {
         return valor;
     }
 
