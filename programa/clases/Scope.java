@@ -10,7 +10,11 @@ public class Scope {
 
     private Scope padre;
     private ArrayList<Scope> hijos;
-
+    private boolean return_encontrado;
+    private boolean break_contenedor;
+    private boolean break_local;
+    private int linea_break;
+    private int columna_break;
     /**
      * Crea un nuevo scope con el nombre dado y el scope padre asociado.
      * @param nombre El nombre del scope
@@ -21,6 +25,11 @@ public class Scope {
         this.simbolos = new ArrayList<Symbols>();
         this.padre = padre;
         this.hijos = new ArrayList<Scope>();
+        this.return_encontrado = false;
+        this.break_contenedor = false;
+        this.break_local = false;
+        this.linea_break = -1;
+        this.columna_break = -1;
     }
 
     /**
@@ -132,4 +141,68 @@ public class Scope {
         }
         return false;
     }
+
+    /**
+     * Obtiene si ya se encontró un return en este scope directo.
+     * @return true si ya hubo un return en este bloque
+     */
+    public boolean getReturnEncontrado() {
+        return return_encontrado;
+    }
+
+    /**
+     * Establece si ya se encontró un return en este scope directo.
+     * @param v, valor a asignar
+     */
+    public void setReturnEncontrado(boolean v) {
+        this.return_encontrado = v;
+    }
+
+    /**
+     * Obtiene si este scope ya fue marcado como contenedor de un break.
+     * Relevante solo en scopes "case", "default" y "do_while".
+     * @return true si ya hay un break en este contenedor
+     */
+    public boolean getBreakContenedor() {
+        return break_contenedor;
+    }
+
+    /**
+     * Marca este scope como contenedor de un break.
+     * @param v valor a asignar
+     */
+    public void setBreakContenedor(boolean v) {
+        this.break_contenedor = v;
+    }
+
+    /**
+     * Obtiene si ya se encontró un break local en este scope.
+     * Se usa para detectar código inalcanzable dentro del mismo bloque.
+     * @return true si hay un break local en este scope
+     */
+    public boolean getBreakLocal() {
+        return break_local;
+    }
+
+    /**
+     * Marca este scope con un break local para detectar unreachable code.
+     * @param v valor a asignar
+     */
+    public void setBreakLocal(boolean v) {
+        this.break_local = v;
+    }
+
+    /**
+     * Obtiene la línea del break que marcó este scope como local.
+     * @return línea del break, o -1 si no fue marcado
+     */
+    public int getLineaBreak() { return linea_break; }
+    public void setLineaBreak(int v) { this.linea_break = v; }
+ 
+    /**
+     * Obtiene la columna del break que marcó este scope como local.
+     * @return columna del break, o -1 si no fue marcado
+     */
+    public int getColumnaBreak() { return columna_break; }
+    public void setColumnaBreak(int v) { this.columna_break = v; }
 }

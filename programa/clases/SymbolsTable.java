@@ -130,6 +130,115 @@ public class SymbolsTable {
     }
 
     /**
+     * Indica si ya se registró un return en el scope actual directo.
+     * @return true si ya hubo un return en el bloque actual
+     */
+    public boolean return_ya_declarado() {
+        if (scope_actual != null) {
+            return scope_actual.getReturnEncontrado();
+        }
+        return false;
+    }
+
+    /**
+     * Marca el scope actual como que ya contiene un return.
+     */
+    public void marcar_return() {
+        if (scope_actual != null) {
+            scope_actual.setReturnEncontrado(true);
+        }
+    }
+
+    /**
+     * Determina si un nombre de scope es un contenedor válido para break.
+     */
+    private boolean es_contenedor_break(String nombre) {
+        return nombre.equals("case") || nombre.equals("default") || nombre.equals("do_while");
+    }
+
+    /**
+     * Busca el scope contenedor más cercano (case, default, do_while)
+     * sin cruzar la raíz de una función.
+     */
+    private Scope buscar_scope_break() {
+        Scope s = scope_actual;
+        while (s != null) {
+            if (es_contenedor_break(s.getNombre())) return s;
+            if (s.getPadre() == null) return null;
+            s = s.getPadre();
+        }
+        return null;
+    }
+
+    /**
+     * Indica si ya se registró un break en el contenedor más cercano.
+     * Usado para detectar breaks duplicados.
+     */
+    public boolean break_ya_declarado() {
+        Scope contenedor = buscar_scope_break();
+        return contenedor != null && contenedor.getBreakContenedor();
+    }
+
+    /**
+     * Marca el contenedor más cercano (case, default, do_while) con
+     * break_contenedor = true. Además guarda la línea y columna del break
+     * para que el error de unreachable code indique exactamente esa posición.
+     *
+     * @param linea  línea del token BREAK en el fuente
+     * @param columna columna del token BREAK en el fuente
+     */
+    public void marcar_break_contenedor(int linea, int columna) {
+        Scope contenedor = buscar_scope_break();
+        if (contenedor != null) {
+            contenedor.setBreakContenedor(true);
+        }
+    }
+
+    /**
+     * Marca el scope actual con break_local = true y guarda la posición del
+     * break para reportar errores de unreachable code con línea y columna exactas.
+     *
+     * @param linea   línea del token BREAK en el fuente
+     * @param columna columna del token BREAK en el fuente
+     */
+    public void marcar_break_local(int linea, int columna) {
+        if (scope_actual != null) {
+            scope_actual.setBreakLocal(true);
+            scope_actual.setLineaBreak(linea);
+            scope_actual.setColumnaBreak(columna);
+        }
+    }
+
+    /**
+     * Indica si el scope actual inmediato tiene un break local activo, lo que hace que la siguiente sentencia sea código inalcanzable.
+     * Solo revisa scope_actual, nunca sube a padres.
+     */
+    public boolean hay_break_activo() {
+        if (scope_actual == null) return false;
+        return scope_actual.getBreakLocal();
+    }
+
+    /**
+     * Retorna la línea del break que hace inalcanzable la siguiente sentencia.
+     * Solo tiene sentido llamarlo cuando hay_break_activo() == true.
+     * @return línea del break previo, o -1 si no aplica
+     */
+    public int get_linea_break_activo() {
+        if (scope_actual == null) return -1;
+        return scope_actual.getLineaBreak();
+    }
+
+    /**
+     * Retorna la columna del break que hace inalcanzable la siguiente sentencia.
+     *
+     * @return columna del break previo, o -1 si no aplica
+     */
+    public int get_columna_break_activo() {
+        if (scope_actual == null) return -1;
+        return scope_actual.getColumnaBreak();
+    }
+
+    /**
      * Imprime la tabla de símbolos.
      * Muestra cada scope con su nombre y los símbolos declarados en ese scope, con su nombre, categoría, tipo y posición (fila y columna).
      */

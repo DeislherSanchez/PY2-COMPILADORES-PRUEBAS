@@ -1,16 +1,13 @@
-int~suma<|int~a, int~b|>
-|:
-    int~x!
-:|
+¡¡ Caso inválido 3: tres break en el mismo switch, en diferentes cases
+¡¡ El primer break es válido; el segundo y el tercero son duplicados.
+¡¡ Resultado esperado: dos errores semánticos (líneas del segundo y tercer break).
 
-int~doble<|int~x|>
+empty ~ __main__ <| |>
 |:
-    int~y!
-:|
-
-empty~__main__<||>
-|:
-    char~x!
-    --x!
-    int~resultado<- suma<|doble<|2|>, doble<|3|>|>!
+    int ~ _var_ <- 2 !
+    if  <| _var_ |> 
+    |: 
+        return~_var_!
+        cout <| "entra al if" |> !
+    :|
 :|
